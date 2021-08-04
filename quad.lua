@@ -459,54 +459,54 @@ local function drawModeTitle()
 	lcd.drawText(64 - math.ceil((#modeText * 5) / 2), 9, modeText, SMLSIZE)
 end
 
+-- Called when script is lauched
 local function run(event)
-  
-  -- Now begin drawing...
-  lcd.clear()
-  
-  -- Gather input from the user
-  gatherInput(event)
+	-- Gather input from the user
+	gatherInput(event)
 
-  -- Check if we just armed...
-  if armed > 512 then
-    isArmed = 1
-  elseif armed < 512 and isArmed == 1 then
-    isArmed = 0
-  else
-    isArmed = 0
-  end
+	-- Now begin drawing...
+	lcd.clear()
 
-  -- Draw a horizontal line seperating the header
-  lcd.drawLine(0, 7, 128, 7, SOLID, FORCE)
+	-- Draw our sexy voltage in upper left courner
+	drawTransmitterVoltage(0, 0, currentVoltage)
 
-  -- Draw our model name centered at the top of the screen
-  lcd.drawText( 64 - math.ceil((#modelName * 5) / 2),0, modelName, SMLSIZE)
+	-- Draw our model name centered at the upper top of the screen
+	lcd.drawText(64 - math.ceil((#modelName * 5) / 2), 0, modelName, SMLSIZE)
 
-  -- Draw our mode centered at the top of the screen just under that...
-  drawModeTitle()
+	-- Draw Time in top right courner
+	drawTime(107, 0)
 
-  -- Draw our sexy quadcopter animated (if armed) from scratch
-  drawQuadcopter(47, 16)
-  
-  -- Draw our sexy voltage
-  drawTransmitterVoltage(0,0, currentVoltage)
+	-- Draw a horizontal line seperating the header
+	lcd.drawLine(0, 7, 128, 7, SOLID, FORCE)
 
-  -- Draw our flight timer
-  drawFlightTimer(84, 34)
-  
-  -- Draw RSSI
-  drawRSSI(84, 8)
-  
-  -- Draw Time in Top Right
-  drawTime(107, 0)
-  
-  -- Draw Voltage bottom middle
-  drawVoltageText(45,50)
-  
-  -- Draw voltage battery graphic
-  drawVoltageImage(3, 10)
-  
-  return 0
+	-- Draw voltage battery graphic in left size
+	drawVoltageImage(3, 10)
+
+	-- Check if we just armed...
+	if armed > 512 then
+		isArmed = 1
+	elseif armed < 512 and isArmed == 1 then
+		isArmed = 0
+	else
+		isArmed = 0
+	end
+
+	-- Draw our mode centered above sexy quad
+	drawModeTitle()
+
+	-- Draw our sexy quadcopter animated (if armed) from scratch in center
+	drawQuadcopter(47, 16)
+
+	-- Draw Voltage at bottom middle
+	drawVoltageText(45, 50)
+
+	-- Draw RSSI at right top
+	drawRSSI(84, 8)
+
+	-- Draw our flight timer at right bottom
+	drawFlightTimer(84, 34)
+
+	return 0
 end
 
 
@@ -519,4 +519,4 @@ local function init_func()
 end
 
 
-return { run=run, init=init_func  }
+return { run = run, init = init_func }
