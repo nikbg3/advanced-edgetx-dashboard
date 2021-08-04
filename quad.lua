@@ -445,17 +445,18 @@ local function gatherInput(event)
 
 end
 
+local function drawModeTitle()
+	local modeText = "Unknown"
 
-local function getModeText()
-  local modeText = "Unknown"
-  if mode < -512 then
-    modeText = "Air Mode"
-  elseif mode > -100 and mode < 100 then
-    modeText = "Acro"
-  elseif mode > 512 then
-    modeText = "Horizon"
-  end
-  return modeText
+	if mode < -512 then
+		modeText = "Acro"
+	elseif mode > -100 and mode < 100 then
+		modeText = "Angle"
+	elseif mode > 512 then
+		modeText = "Horizon"
+	end
+
+	lcd.drawText(64 - math.ceil((#modeText * 5) / 2), 9, modeText, SMLSIZE)
 end
 
 local function run(event)
@@ -482,8 +483,7 @@ local function run(event)
   lcd.drawText( 64 - math.ceil((#modelName * 5) / 2),0, modelName, SMLSIZE)
 
   -- Draw our mode centered at the top of the screen just under that...
-  modeText = getModeText()
-  lcd.drawText( 64 - math.ceil((#modeText * 5) / 2),9, modeText, SMLSIZE)
+  drawModeTitle()
 
   -- Draw our sexy quadcopter animated (if armed) from scratch
   drawQuadcopter(47, 16)
