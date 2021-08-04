@@ -36,18 +36,6 @@ local lastNumberMessage = "0"
 
 
 ------- HELPERS -------
--- Helper converts voltage to percentage of voltage for a sexy battery percent
-local function convertVoltageToPercentage(voltage)
-  local curVolPercent = math.ceil(((((highVoltage - voltage) / (highVoltage - lowVoltage)) - 1) * -1) * 100)
-  if curVolPercent < 0 then
-    curVolPercent = 0
-  end
-  if curVolPercent > 100 then
-    curVolPercent = 100
-  end
-  return curVolPercent
-end
-
 local function drawPropellor(start_x, start_y, invert)
   local animationIncrementLocal = animationIncrement
   if invert == true then
@@ -111,41 +99,37 @@ local function drawQuadcopter(x, y)
 end
 
 
--- Sexy voltage helper
-local function drawTransmitterVoltage(start_x,start_y,voltage)
-  
-  local batteryWidth = 17
-  
-  -- Battery Outline
-  lcd.drawRectangle(start_x, start_y, batteryWidth + 2, 6, SOLID)
-  lcd.drawLine(start_x + batteryWidth + 2, start_y + 1, start_x + batteryWidth + 2, start_y + 4, SOLID, FORCE) -- Positive Nub
+-- Sexy tx voltage helper
+local function drawTransmitterVoltage(x, y, value)
+	local batteryWidth = 17
+	local batteryPercent = math.ceil(((((highVoltage - value) / (highVoltage - lowVoltage)) - 1) * -1) * 100)
 
-  -- Battery Percentage (after battery)
-  local curVolPercent = convertVoltageToPercentage(voltage)
-  if curVolPercent < 20 then
-    lcd.drawText(start_x + batteryWidth + 5, start_y, curVolPercent.."%", SMLSIZE + BLINK)
-  else
-    if curVolPercent == 100 then
-      lcd.drawText(start_x + batteryWidth + 5, start_y, "99%", SMLSIZE)
-    else
-      lcd.drawText(start_x + batteryWidth + 5, start_y, curVolPercent.."%", SMLSIZE)
-    end
-      
-  end
-  
-  -- Filled in battery
-  local pixels = math.ceil((curVolPercent / 100) * batteryWidth)
-  if pixels == 1 then
-    lcd.drawLine(start_x + pixels, start_y + 1, start_x + pixels, start_y + 4, SOLID, FORCE)
-  end
-  if pixels > 1 then
-    lcd.drawRectangle(start_x + 1, start_y + 1, pixels, 4)
-  end
-  if pixels > 2 then
-    lcd.drawRectangle(start_x + 2, start_y + 2, pixels - 1, 2)
-    lcd.drawLine(start_x + pixels, start_y + 2, start_x + pixels, start_y + 3, SOLID, FORCE)
-  end
+	batteryPercent = batteryPercent < 0 and 0 or (batteryPercent > 100 and 100 or batteryPercent)
+
+	-- Battery Outline
+	lcd.drawRectangle(x, y, x + batteryWidth + 2, y + 6, SOLID)
+	lcd.drawLine(x + batteryWidth + 2, y + 1, x + batteryWidth + 2, y + 4, SOLID, FORCE)
+
+	-- Battery Percentage (after battery)
+	lcd.drawText(x + batteryWidth + 5, y, batteryPercent.."%", (batteryPercent < 20 and SMLSIZE + BLINK or SMLSIZE))
+
+	-- Filled in battery
+	local pixels = math.ceil((batteryPercent / 100) * batteryWidth)
+
+	if pixels == 1 then
+		lcd.drawLine(x + pixels, y + 1, x + pixels, y + 4, SOLID, FORCE)
+	end
+
+	if pixels > 1 then
+		lcd.drawRectangle(x + 1, y + 1, x + pixels, y + 4)
+	end
+
+	if pixels > 2 then
+		lcd.drawRectangle(x + 2, y + 2, x + pixels - 1, 2)
+		lcd.drawLine(x + pixels, y + 2, x + pixels, y + 3, SOLID, FORCE)
+	end
 end
+
 
 local function drawFlightTimer(start_x, start_y)
   local timerWidth = 44
