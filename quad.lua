@@ -28,6 +28,8 @@ local animationIncrement = 0
 local isArmed = 0
 -- Our global to get our current rssi
 local rssi = 0
+-- Global for quad voltage
+local voltage = 0
 -- For debugging / development
 local lastMessage = "None"
 local lastNumberMessage = "0"
@@ -326,18 +328,9 @@ local function drawRSSI(start_x, start_y)
 
 end
 
-local function drawVoltageText(start_x, start_y)
-  -- First, try to get voltage from VFAS...
-  local voltage = getValue('VFAS')
-  -- local voltage = getValue('Cels')   -- For miniwhoop seems more accurate
-  -- TODO: if that failed, get voltage from somewhere else from my bigger quads?  Or rebind the voltage to VFAS?
-  
-  if tonumber(voltage) >= 10 then
-    lcd.drawText(start_x,start_y,string.format("%.2f", voltage),MIDSIZE)
-  else
-    lcd.drawText(start_x + 7,start_y,string.format("%.2f", voltage),MIDSIZE)
-  end
-  lcd.drawText(start_x + 31, start_y + 4, 'v', MEDSIZE)
+local function drawVoltageText(x, y)
+	lcd.drawText(x + (tonumber(voltage) >= 10 and 0 or 7), y, string.format("%.2f", voltage), MIDSIZE)
+	lcd.drawText(x + 31, y + 4, 'v', MEDSIZE)
 end
 
 local function drawVoltageImage(start_x, start_y)
@@ -403,6 +396,10 @@ local function gatherInput(event)
 
   -- Get our current transmitter voltage
   currentVoltage = getValue('tx-voltage')
+  
+   -- Our quad battery
+  voltage = getValue('VFAS')
+  -- local voltage = getValue('Cels') -- For miniwhoop seems more accurate
 
   -- Armed / Disarm / Buzzer switch
   armed = getValue('sa')
