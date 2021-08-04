@@ -7,8 +7,6 @@
 
 
 ------- GLOBALS -------
--- The model name when it can't detect a model name from the handset
-local modelName = "Unknown"
 -- I'm using 8 NiMH Batteries in my QX7, which is 1.1v low, and ~1.325v high
 local lowVoltage = 8.8
 local currentVoltage = 10.6
@@ -525,12 +523,12 @@ local function run(event)
 end
 
 
+-- Called once when model is loaded
 local function init_func()
-  -- Called once when model is loaded, only need to get model name once...
-  local modeldata = model.getInfo()
-  if modeldata then
-    modelName = modeldata['name']
-  end
+	local modeldata = model.getInfo()
+
+	-- The model name from the handset
+	modelName = (modeldata and modeldata['name'] or "Unknown")
 end
 
 
