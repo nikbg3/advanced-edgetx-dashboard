@@ -46,11 +46,6 @@ local function convertVoltageToPercentage(voltage)
   return curVolPercent
 end
 
--- A little animation / frame counter to help us with various animations
-local function setAnimationIncrement()
-  animationIncrement = math.fmod(math.ceil(math.fmod(getTime() / 100, 2) * 8), 4)
-end
-
 local function drawPropellor(start_x, start_y, invert)
   local animationIncrementLocal = animationIncrement
   if invert == true then
@@ -82,37 +77,35 @@ local function drawPropellor(start_x, start_y, invert)
 end
 
 -- A sexy helper to draw a 30x30 quadcopter (since X7 can not draw bitmap)
-local function drawQuadcopter(start_x,start_y)
-  
-  -- Top left to bottom right
-  lcd.drawLine(start_x + 4, start_y + 4, start_x + 26, start_y + 26, SOLID, FORCE)
-  lcd.drawLine(start_x + 4, start_y + 5, start_x + 25, start_y + 26, SOLID, FORCE)
-  lcd.drawLine(start_x + 5, start_y + 4, start_x + 26, start_y + 25, SOLID, FORCE)
-  
-  -- Bottom left to top right
-  lcd.drawLine(start_x + 4, start_y + 26, start_x + 26, start_y + 4, SOLID, FORCE)
-  lcd.drawLine(start_x + 4, start_y + 25, start_x + 25, start_y + 4, SOLID, FORCE)
-  lcd.drawLine(start_x + 5, start_y + 26, start_x + 26, start_y + 5, SOLID, FORCE)
-  
-  -- Middle of Quad
-  lcd.drawRectangle(start_x + 11, start_y + 11, 9, 9, SOLID)
-  lcd.drawRectangle(start_x + 12, start_y + 12, 7, 7, SOLID)
-  lcd.drawRectangle(start_x + 13, start_y + 13, 5, 5, SOLID)
+local function drawQuadcopter(x, y)
+  	-- A little animation / frame counter to help us with various animations
+	animationIncrement = math.fmod(math.ceil(math.fmod(getTime() / 100, 2) * 8), 4)
 
-  -- ARMED text
-  if isArmed == 1 then
-    lcd.drawText(start_x + 3, start_y + 12, "ARMED", SMLSIZE + BLINK)
-  end
-  
-  -- Top-left propellor
-  drawPropellor(start_x, start_y, false)
-  -- Bottom-Right Propellor
-  drawPropellor(start_x + 20, start_y + 20, false)
-  -- Top-Right Propellor
-  drawPropellor(start_x + 20, start_y, true)
-  -- Bottom-left Propellor
-  drawPropellor(start_x, start_y + 20, true)
-  
+	-- Top left to bottom right
+	lcd.drawLine(x + 4, y + 4, x + 26, y + 26, SOLID, FORCE)
+	lcd.drawLine(x + 4, y + 5, x + 25, y + 26, SOLID, FORCE)
+	lcd.drawLine(x + 5, y + 4, x + 26, y + 25, SOLID, FORCE)
+
+	-- Bottom left to top right
+	lcd.drawLine(x + 4, y + 26, x + 26, y + 4, SOLID, FORCE)
+	lcd.drawLine(x + 4, y + 25, x + 25, y + 4, SOLID, FORCE)
+	lcd.drawLine(x + 5, y + 26, x + 26, y + 5, SOLID, FORCE)
+
+	-- Middle of Quad
+	lcd.drawRectangle(x + 11, y + 11, 9, 9, SOLID)
+	lcd.drawRectangle(x + 12, y + 12, 7, 7, SOLID)
+	lcd.drawRectangle(x + 13, y + 13, 5, 5, SOLID)
+
+	-- Draw propellors [top left, bottom right, top right, bottom left]
+	drawPropellor(x, y, false)
+	drawPropellor(x + 20, y + 20, false)
+	drawPropellor(x + 20, y, true)
+	drawPropellor(x, y + 20, true)
+	
+	-- ARMED text
+	if isArmed == 1 then
+		lcd.drawText(x + 3, y + 12, "ARMED", SMLSIZE + BLINK)
+	end
 end
 
 
@@ -475,9 +468,6 @@ local function run(event)
   
   -- Gather input from the user
   gatherInput(event)
-  
-  -- Set our animation "frame"
-  setAnimationIncrement()
 
   -- Check if we just armed...
   if armed > 512 then
