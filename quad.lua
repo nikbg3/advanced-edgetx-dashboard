@@ -183,22 +183,21 @@ local function drawFlightTimer(start_x, start_y)
   
 end
 
-local function drawTime()
-  -- Draw date time
-  local datenow = getDateTime()
-  local min = datenow.min .. ""
-  if datenow.min < 10 then
-    min = "0" .. min
-  end
-  local hour = datenow.hour .. ""
-  if datenow.hour < 10 then
-    hour = "0" .. hour
-  end
-  if math.ceil(math.fmod(getTime() / 100, 2)) == 1 then
-    hour = hour .. ":"
-  end
-  lcd.drawText(107,0,hour, SMLSIZE)
-  lcd.drawText(119,0,min, SMLSIZE)
+local function drawTime(x, y)
+	local timeNow = getDateTime()
+
+	local min = string.format("%02.0f", timeNow.min)
+	local hour = string.format("%02.0f", timeNow.hour) .. (math.ceil(math.fmod(getTime() / 100, 2)) == 1 and ":" or "")
+
+	lcd.drawText(x, y, hour, SMLSIZE)
+	lcd.drawText(x + 12, y, min, SMLSIZE)
+
+	lcd.drawLine(x - 7, y + 0, x - 4, y + 0, SOLID, FORCE)
+	lcd.drawLine(x - 8, y + 1, x - 8, y + 4, SOLID, FORCE)
+	lcd.drawLine(x - 3, y + 1, x - 3, y + 4, SOLID, FORCE)
+	lcd.drawLine(x - 6, y + 2, x - 6, y + 3, SOLID, FORCE)
+	lcd.drawLine(x - 6, y + 3, x - 5, y + 3, SOLID, FORCE)
+	lcd.drawLine(x - 7, y + 5, x - 4, y + 5, SOLID, FORCE)
 end
 
 local function drawRSSI(start_x, start_y)
@@ -323,17 +322,17 @@ local function drawRSSI(start_x, start_y)
   if rssi > 98 then
     lcd.drawLine(start_x + 42, start_y + 11, start_x + 42, start_y + 23, SOLID, FORCE)
   end
-  
-  if rssi > 0 then
-    lcd.drawLine(101, 5, 101, 5, SOLID, FORCE)
-    lcd.drawLine(100, 2, 102, 2, SOLID, FORCE)
-    lcd.drawLine(99, 3, 99, 3, SOLID, FORCE)
-    lcd.drawLine(103, 3, 103, 3, SOLID, FORCE)
-    lcd.drawLine(99, 0, 103, 0, SOLID, FORCE)
-    lcd.drawLine(98, 1, 98, 1, SOLID, FORCE)
-    lcd.drawLine(104, 1, 104, 1, SOLID, FORCE)
-  end
-  
+
+	if rssi > 0 then
+		lcd.drawLine(start_x + 35, start_y + 3, start_x + 35, start_y + 3, SOLID, FORCE)
+		lcd.drawLine(start_x + 36, start_y + 2, start_x + 40, start_y + 2, SOLID, FORCE)
+		lcd.drawLine(start_x + 41, start_y + 3, start_x + 41, start_y + 3, SOLID, FORCE)
+		lcd.drawLine(start_x + 36, start_y + 5, start_x + 36, start_y + 5, SOLID, FORCE)
+		lcd.drawLine(start_x + 37, start_y + 4, start_x + 39, start_y + 4, SOLID, FORCE)
+		lcd.drawLine(start_x + 40, start_y + 5, start_x + 40, start_y + 5, SOLID, FORCE)
+		lcd.drawLine(start_x + 38, start_y + 7, start_x + 38, start_y + 7, SOLID, FORCE)
+	end
+
 end
 
 local function drawVoltageText(start_x, start_y)
@@ -514,7 +513,7 @@ local function run(event)
   drawRSSI(84, 8)
   
   -- Draw Time in Top Right
-  drawTime()
+  drawTime(107, 0)
   
   -- Draw Voltage bottom middle
   drawVoltageText(45,50)
