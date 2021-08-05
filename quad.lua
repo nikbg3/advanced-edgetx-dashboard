@@ -120,34 +120,19 @@ local function drawTransmitterVoltage(x, y, value)
 end
 
 
-local function drawFlightTimer(start_x, start_y)
-  local timerWidth = 44
-  local timerHeight = 20
-  local myWidth = 0
-  local percentageLeft = 0
-  
-  lcd.drawRectangle( start_x, start_y, timerWidth, 10 )
-  lcd.drawText( start_x + 2, start_y + 2, "Fly Timer", SMLSIZE )
-  lcd.drawRectangle( start_x, start_y + 10, timerWidth, timerHeight )
+local function drawFlightTimer(x, y)
+	lcd.drawRectangle(x, y, 44, 10)
+	lcd.drawText(x + 2, y + 2, "Fly Timer", SMLSIZE)	
+	lcd.drawTimer(x + 2, y + 11, math.abs(timerLeft), (timerLeft >= 0 and DBLSIZE or DBLSIZE + BLINK))
 
-  if timerLeft < 0 then
-    lcd.drawRectangle( start_x + 2, start_y + 20, 3, 2 )
-    lcd.drawText( start_x + 2 + 3, start_y + 12, (timerLeft * -1).."s", DBLSIZE + BLINK )
-  else
-    lcd.drawTimer( start_x + 2, start_y + 12, timerLeft, DBLSIZE )
-  end 
-  
-  percentageLeft = (timerLeft / maxTimerValue)
-  local offset = 0
-  while offset < (timerWidth - 2) do
-    if (percentageLeft * (timerWidth - 2)) > offset then
-      -- print("Percent left: "..percentageLeft.." width: "..myWidth.." offset: "..offset.." timerHeight: "..timerHeight)
-      lcd.drawLine( start_x + 1 + offset, start_y + 11, start_x + 1 + offset, start_y + 9 + timerHeight - 1, SOLID, 0)
-    end
-    offset = offset + 1
-  end
-  
+	for offset = 0, timerLeft / maxTimerValue * 42, 1
+	do
+		lcd.drawLine(x + offset, y + 10, x + offset, y + 28, SOLID, 0)
+	end
+
+	lcd.drawRectangle(x, y + 9, 44, 20, SOLID)
 end
+
 
 local function drawTime(x, y)
 	local timeNow = getDateTime()
