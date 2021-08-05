@@ -36,34 +36,29 @@ local lastNumberMessage = "0"
 
 
 ------- HELPERS -------
-local function drawPropellor(start_x, start_y, invert)
-  local animationIncrementLocal = animationIncrement
-  if invert == true then
-    animationIncrementLocal = (animationIncrementLocal - 3) * -1
-    animationIncrementLocal = animationIncrementLocal + 3
-    if animationIncrementLocal > 3 then
-      animationIncrementLocal = animationIncrementLocal - 4
-    end
-  end
-  
-  -- Animated Quadcopter propellors
-  if ((isArmed == 0 or isArmed == 2) and invert == false) or (isArmed == 1 and animationIncrementLocal == 0) then
-    -- Top left Propellor
-    lcd.drawLine(start_x + 1, start_y + 9, start_x + 9, start_y + 1, SOLID, FORCE)
-    lcd.drawLine(start_x + 1, start_y + 10, start_x + 8, start_y + 1, SOLID, FORCE)
-  elseif isArmed == 1 and animationIncrementLocal == 1 then
-    -- Top left Propellor
-    lcd.drawLine(start_x, start_y + 5, start_x + 9, start_y + 5, SOLID, FORCE)
-    lcd.drawLine(start_x, start_y + 4, start_x + 9, start_y + 6, SOLID, FORCE)
-  elseif ((isArmed == 0 or isArmed == 2) and invert == true) or (isArmed == 1 and animationIncrementLocal == 2) then
-    -- Top left Propellor
-    lcd.drawLine(start_x + 1, start_y + 1, start_x + 9, start_y + 9, SOLID, FORCE)
-    lcd.drawLine(start_x + 1, start_y + 2, start_x + 10, start_y + 9, SOLID, FORCE)
-  elseif isArmed == 1 and animationIncrementLocal == 3 then
-    -- Top left Propellor
-    lcd.drawLine(start_x + 5, start_y, start_x + 5, start_y + 10, SOLID, FORCE)
-    lcd.drawLine(start_x + 6, start_y, start_x + 4, start_y + 10, SOLID, FORCE)
-  end
+
+-- Animated Quadcopter propellor (zero coords for top left)
+local function drawPropellor(x, y, invert)
+	local animation = animationIncrement
+
+	if invert == true then
+		animation = (animation - 3) * -1 + 3
+		animation = animation - (animation > 3 and 4 or 0)
+	end
+
+	if (isArmed == 0 and invert == false) or (isArmed == 1 and animation == 0) then
+		lcd.drawLine(x + 1, y + 9, x + 9, y + 1, SOLID, FORCE)
+		lcd.drawLine(x + 1, y + 10, x + 8, y + 1, SOLID, FORCE)
+	elseif isArmed == 1 and animation == 1 then
+		lcd.drawLine(x, y + 5, x + 9, y + 5, SOLID, FORCE)
+		lcd.drawLine(x, y + 4, x + 9, y + 6, SOLID, FORCE)
+	elseif (isArmed == 0 and invert == true) or (isArmed == 1 and animation == 2) then
+		lcd.drawLine(x + 1, y + 1, x + 9, y + 9, SOLID, FORCE)
+		lcd.drawLine(x + 1, y + 2, x + 10, y + 9, SOLID, FORCE)
+	elseif isArmed == 1 and animation == 3 then
+		lcd.drawLine(x + 5, y, x + 5, y + 10, SOLID, FORCE)
+		lcd.drawLine(x + 6, y, x + 4, y + 10, SOLID, FORCE)
+	end
 end
 
 -- A sexy helper to draw a 30x30 quadcopter (since X7 can not draw bitmap)
