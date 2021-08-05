@@ -101,33 +101,22 @@ end
 
 -- Sexy tx voltage helper
 local function drawTransmitterVoltage(x, y, value)
-	local batteryWidth = 17
 	local batteryPercent = math.ceil(((((highVoltage - value) / (highVoltage - lowVoltage)) - 1) * -1) * 100)
 
 	batteryPercent = batteryPercent < 0 and 0 or (batteryPercent > 100 and 100 or batteryPercent)
 
 	-- Battery Outline
-	lcd.drawRectangle(x, y, x + batteryWidth + 2, y + 6, SOLID)
-	lcd.drawLine(x + batteryWidth + 2, y + 1, x + batteryWidth + 2, y + 4, SOLID, FORCE)
+	lcd.drawRectangle(x, y, x + 12, y + 6, SOLID)
+	lcd.drawLine(x + 12, y + 1, x + 12, y + 4, SOLID, FORCE)
 
 	-- Battery Percentage (after battery)
-	lcd.drawText(x + batteryWidth + 5, y, batteryPercent.."%", (batteryPercent < 20 and SMLSIZE + BLINK or SMLSIZE))
+	lcd.drawText(x + 15, y, batteryPercent.."%", (batteryPercent < 20 and SMLSIZE + BLINK or SMLSIZE))
 
 	-- Filled in battery
-	local pixels = math.ceil((batteryPercent / 100) * batteryWidth)
+	local pixels = math.ceil((batteryPercent / 100) * 10)
 
-	if pixels == 1 then
-		lcd.drawLine(x + pixels, y + 1, x + pixels, y + 4, SOLID, FORCE)
-	end
-
-	if pixels > 1 then
-		lcd.drawRectangle(x + 1, y + 1, x + pixels, y + 4)
-	end
-
-	if pixels > 2 then
-		lcd.drawRectangle(x + 2, y + 2, x + pixels - 1, 2)
-		lcd.drawLine(x + pixels, y + 2, x + pixels, y + 3, SOLID, FORCE)
-	end
+	lcd.drawFilledRectangle(x + 1, y + 1, pixels, 4, SOLID)
+	lcd.drawRectangle(x + 1, y + 1, pixels, 4, SOLID)
 end
 
 
