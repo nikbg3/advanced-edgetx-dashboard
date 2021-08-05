@@ -177,140 +177,34 @@ local function drawTime(x, y)
 	lcd.drawLine(x - 7, y + 5, x - 4, y + 5, SOLID, FORCE)
 end
 
-local function drawRSSI(start_x, start_y)
-  local timerWidth = 44
-  local timerHeight = 15
-  local myWidth = 0
-  local percentageLeft = 0
-  
-  lcd.drawRectangle( start_x, start_y, timerWidth, 10 )
-  lcd.drawText( start_x + 2, start_y + 2, "RSSI:", SMLSIZE)
-  if rssi < 50 then
-    lcd.drawText( start_x + 23, start_y + 2, rssi, SMLSIZE + BLINK)
-  else
-    lcd.drawText( start_x + 23, start_y + 2, rssi, SMLSIZE)
-  end
-  lcd.drawRectangle( start_x, start_y + 10, timerWidth, timerHeight )
-  
-  
-  if rssi > 0 then
-    lcd.drawLine(start_x + 1,  start_y + 20, start_x + 1,  start_y + 23, SOLID, FORCE)
-    lcd.drawLine(start_x + 2,  start_y + 20, start_x + 2,  start_y + 23, SOLID, FORCE)
-    lcd.drawLine(start_x + 3,  start_y + 20, start_x + 3,  start_y + 23, SOLID, FORCE)
-    lcd.drawLine(start_x + 4,  start_y + 20, start_x + 4,  start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 10 then
-    lcd.drawLine(start_x + 5,  start_y + 19, start_x + 5,  start_y + 23, SOLID, FORCE)
-    lcd.drawLine(start_x + 6,  start_y + 19, start_x + 6,  start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 13 then
-    lcd.drawLine(start_x + 7,  start_y + 19, start_x + 7,  start_y + 23, SOLID, FORCE)
-    lcd.drawLine(start_x + 8,  start_y + 19, start_x + 8,  start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 16 then
-    lcd.drawLine(start_x + 9,  start_y + 18, start_x + 9,  start_y + 23, SOLID, FORCE)
-    lcd.drawLine(start_x + 10, start_y + 18, start_x + 10, start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 19 then
-    lcd.drawLine(start_x + 11, start_y + 18, start_x + 11, start_y + 23, SOLID, FORCE)
-    lcd.drawLine(start_x + 12, start_y + 18, start_x + 12, start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 22 then
-    lcd.drawLine(start_x + 13, start_y + 17, start_x + 13, start_y + 23, SOLID, FORCE)
-    lcd.drawLine(start_x + 14, start_y + 17, start_x + 14, start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 25 then
-    lcd.drawLine(start_x + 15, start_y + 17, start_x + 15, start_y + 23, SOLID, FORCE)
-    lcd.drawLine(start_x + 16, start_y + 17, start_x + 16, start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 28 then
-    lcd.drawLine(start_x + 17, start_y + 16, start_x + 17, start_y + 23, SOLID, FORCE)
-    lcd.drawLine(start_x + 18, start_y + 16, start_x + 18, start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 31 then
-    lcd.drawLine(start_x + 19, start_y + 16, start_x + 19, start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 34 then
-    lcd.drawLine(start_x + 20, start_y + 16, start_x + 20, start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 37 then
-    lcd.drawLine(start_x + 21, start_y + 15, start_x + 21, start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 40 then
-    lcd.drawLine(start_x + 22, start_y + 15, start_x + 22, start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 43 then
-    lcd.drawLine(start_x + 23, start_y + 15, start_x + 23, start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 46 then
-    lcd.drawLine(start_x + 24, start_y + 15, start_x + 24, start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 49 then
-    lcd.drawLine(start_x + 25, start_y + 14, start_x + 25, start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 52 then
-    lcd.drawLine(start_x + 26, start_y + 14, start_x + 26, start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 55 then
-    lcd.drawLine(start_x + 27, start_y + 14, start_x + 27, start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 58 then
-    lcd.drawLine(start_x + 28, start_y + 14, start_x + 28, start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 61 then
-    lcd.drawLine(start_x + 29, start_y + 13, start_x + 29, start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 64 then
-    lcd.drawLine(start_x + 30, start_y + 13, start_x + 30, start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 67 then
-    lcd.drawLine(start_x + 31, start_y + 13, start_x + 31, start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 70 then
-    lcd.drawLine(start_x + 32, start_y + 13, start_x + 32, start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 73 then
-    lcd.drawLine(start_x + 33, start_y + 12, start_x + 33, start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 76 then
-    lcd.drawLine(start_x + 34, start_y + 12, start_x + 34, start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 79 then
-    lcd.drawLine(start_x + 35, start_y + 12, start_x + 35, start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 82 then
-    lcd.drawLine(start_x + 36, start_y + 12, start_x + 36, start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 85 then
-    lcd.drawLine(start_x + 37, start_y + 11, start_x + 37, start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 88 then
-    lcd.drawLine(start_x + 38, start_y + 11, start_x + 38, start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 91 then
-    lcd.drawLine(start_x + 39, start_y + 11, start_x + 39, start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 94 then
-    lcd.drawLine(start_x + 40, start_y + 11, start_x + 40, start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 97 then
-    lcd.drawLine(start_x + 41, start_y + 11, start_x + 41, start_y + 23, SOLID, FORCE)
-  end
-  if rssi > 98 then
-    lcd.drawLine(start_x + 42, start_y + 11, start_x + 42, start_y + 23, SOLID, FORCE)
-  end
+local function drawRSSI(x, y)
+	lcd.drawRectangle(x, y, 44, 10)
+
+	lcd.drawText(x + 2, y + 2, "RSSI:", SMLSIZE)
+	lcd.drawText(x + 24, y + 2, rssi, (rssi < 50 and SMLSIZE + BLINK or SMLSIZE))
+
+	lcd.drawRectangle(x, y + 9, 44, 15, SOLID)
 
 	if rssi > 0 then
-		lcd.drawLine(start_x + 35, start_y + 3, start_x + 35, start_y + 3, SOLID, FORCE)
-		lcd.drawLine(start_x + 36, start_y + 2, start_x + 40, start_y + 2, SOLID, FORCE)
-		lcd.drawLine(start_x + 41, start_y + 3, start_x + 41, start_y + 3, SOLID, FORCE)
-		lcd.drawLine(start_x + 36, start_y + 5, start_x + 36, start_y + 5, SOLID, FORCE)
-		lcd.drawLine(start_x + 37, start_y + 4, start_x + 39, start_y + 4, SOLID, FORCE)
-		lcd.drawLine(start_x + 40, start_y + 5, start_x + 40, start_y + 5, SOLID, FORCE)
-		lcd.drawLine(start_x + 38, start_y + 7, start_x + 38, start_y + 7, SOLID, FORCE)
-	end
+		for i = 2, rssi + 2, 2
+		do
+			lcd.drawLine(x + 1 + i / 2.5, y + 20 - i / 10, x + 1 + i / 2.5, y + 22, SOLID, FORCE)
+		end
 
+		if rssi == 99 then
+			lcd.drawLine(x + 42, y + 10, x + 42, y + 22, SOLID, FORCE)
+		end
+
+		lcd.drawLine(x + 35, y + 3, x + 35, y + 3, SOLID, FORCE)
+		lcd.drawLine(x + 36, y + 2, x + 40, y + 2, SOLID, FORCE)
+		lcd.drawLine(x + 41, y + 3, x + 41, y + 3, SOLID, FORCE)
+		lcd.drawLine(x + 36, y + 5, x + 36, y + 5, SOLID, FORCE)
+		lcd.drawLine(x + 37, y + 4, x + 39, y + 4, SOLID, FORCE)
+		lcd.drawLine(x + 40, y + 5, x + 40, y + 5, SOLID, FORCE)
+		lcd.drawLine(x + 38, y + 7, x + 38, y + 7, SOLID, FORCE)
+	end
 end
+
 
 local function drawVoltageText(x, y)
 	lcd.drawText(x + (tonumber(voltage) >= 10 and 0 or 7), y, string.format("%.2f", voltage), MIDSIZE)
@@ -485,7 +379,7 @@ local function run(event)
 	drawVoltageText(45, 50)
 
 	-- Draw RSSI at right top
-	drawRSSI(84, 8)
+	drawRSSI(84, 9)
 
 	-- Draw our flight timer at right bottom
 	drawFlightTimer(84, 34)
