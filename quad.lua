@@ -180,53 +180,39 @@ local function drawVoltageText(x, y)
 	lcd.drawText(x + 31, y + 4, 'v', MEDSIZE)
 end
 
-local function drawVoltageImage(start_x, start_y)
-  
-  -- Define the battery width (so we can adjust it later)
-  local batteryWidth = 12 
+-- Big and sexy battery graphic
+local function drawVoltageImage(x, y)
+	local voltageLow = 3.3
+	local voltageHigh = 4.35
+	local batteryWidth = 12
 
-  -- Draw our battery outline
-  lcd.drawLine(start_x + 2, start_y + 1, start_x + batteryWidth - 2, start_y + 1, SOLID, 0)
-  lcd.drawLine(start_x, start_y + 2, start_x + batteryWidth - 1, start_y + 2, SOLID, 0)
-  lcd.drawLine(start_x, start_y + 2, start_x, start_y + 50, SOLID, 0)
-  lcd.drawLine(start_x, start_y + 50, start_x + batteryWidth - 1, start_y + 50, SOLID, 0)
-  lcd.drawLine(start_x + batteryWidth, start_y + 3, start_x + batteryWidth, start_y + 49, SOLID, 0)
+	-- Draw our battery outline
+	lcd.drawLine(x + 2, y + 1, x + batteryWidth - 2, y + 1, SOLID, 0)
+	lcd.drawLine(x, y + 2, x + batteryWidth - 1, y + 2, SOLID, 0)
+	lcd.drawLine(x, y + 2, x, y + 50, SOLID, 0)
+	lcd.drawLine(x, y + 50, x + batteryWidth - 1, y + 50, SOLID, 0)
+	lcd.drawLine(x + batteryWidth, y + 3, x + batteryWidth, y + 49, SOLID, 0)
 
-  -- top one eighth line
-  lcd.drawLine(start_x + batteryWidth - math.ceil(batteryWidth / 4), start_y + 8, start_x + batteryWidth - 1, start_y + 8, SOLID, 0)
-  -- top quarter line
-  lcd.drawLine(start_x + batteryWidth - math.ceil(batteryWidth / 2), start_y + 14, start_x + batteryWidth - 1, start_y + 14, SOLID, 0)
-  -- third eighth line
-  lcd.drawLine(start_x + batteryWidth - math.ceil(batteryWidth / 4), start_y + 20, start_x + batteryWidth - 1, start_y + 20, SOLID, 0)
-  -- Middle line
-  lcd.drawLine(start_x + 1, start_y + 26, start_x + batteryWidth - 1, start_y + 26, SOLID, 0)
-  -- five eighth line
-  lcd.drawLine(start_x + batteryWidth - math.ceil(batteryWidth / 4), start_y + 32, start_x + batteryWidth - 1, start_y + 32, SOLID, 0)
-  -- bottom quarter line
-  lcd.drawLine(start_x + batteryWidth - math.ceil(batteryWidth / 2), start_y + 38, start_x + batteryWidth - 1, start_y + 38, SOLID, 0)
-  -- seven eighth line
-  lcd.drawLine(start_x + batteryWidth - math.ceil(batteryWidth / 4), start_y + 44, start_x + batteryWidth - 1, start_y + 44, SOLID, 0)
-  
-  -- Voltage top
-  lcd.drawText(start_x + batteryWidth + 4, start_y + 0, "4.35v", SMLSIZE)
-  -- Voltage middle
-  lcd.drawText(start_x + batteryWidth + 4, start_y + 24, "3.82v", SMLSIZE)
-  -- Voltage bottom
-  lcd.drawText(start_x + batteryWidth + 4, start_y + 47, "3.3v", SMLSIZE)
-  
-  -- Now draw how full our voltage is...
-  local voltage = getValue('VFAS')
-  voltageLow = 3.3
-  voltageHigh = 4.35
-  voltageIncrement = ((voltageHigh - voltageLow) / 47)
-  
-  local offset = 0  -- Start from the bottom up
-  while offset < 47 do
-    if ((offset * voltageIncrement) + voltageLow) < tonumber(voltage) then
-      lcd.drawLine( start_x + 1, start_y + 49 - offset, start_x + batteryWidth - 1, start_y + 49 - offset, SOLID, 0)
-    end
-    offset = offset + 1
-  end
+	-- Draw battery markers from top to bottom
+	lcd.drawLine(x + batteryWidth - math.ceil(batteryWidth / 4), y + 8, x + batteryWidth - 1, y + 8, SOLID, 0)
+	lcd.drawLine(x + batteryWidth - math.ceil(batteryWidth / 2), y + 14, x + batteryWidth - 1, y + 14, SOLID, 0)
+	lcd.drawLine(x + batteryWidth - math.ceil(batteryWidth / 4), y + 20, x + batteryWidth - 1, y + 20, SOLID, 0)
+	lcd.drawLine(x + 1, y + 26, x + batteryWidth - 1, y + 26, SOLID, 0)
+	lcd.drawLine(x + batteryWidth - math.ceil(batteryWidth / 4), y + 32, x + batteryWidth - 1, y + 32, SOLID, 0)
+	lcd.drawLine(x + batteryWidth - math.ceil(batteryWidth / 2), y + 38, x + batteryWidth - 1, y + 38, SOLID, 0)
+	lcd.drawLine(x + batteryWidth - math.ceil(batteryWidth / 4), y + 44, x + batteryWidth - 1, y + 44, SOLID, 0)
+
+	-- Place voltage text [top, middle, bottom]
+	lcd.drawText(x + batteryWidth + 4, y + 0, voltageHigh.."v", SMLSIZE)
+	lcd.drawText(x + batteryWidth + 4, y + 24, string.format("%.2f", (voltageHigh - voltageLow) / 2 + voltageLow).."v", SMLSIZE)
+	lcd.drawText(x + batteryWidth + 4, y + 47, voltageLow.."v", SMLSIZE)
+
+	-- Now draw how full our voltage is...
+	for offset = 0, 46, 1 do
+		if ((offset * (voltageHigh - voltageLow) / 47) + voltageLow) < tonumber(voltage) then
+			lcd.drawLine(x + 1, y + 49 - offset, x + batteryWidth - 1, y + 49 - offset, SOLID, 0)
+		end
+	end
 end
 
 local function gatherInput(event)
