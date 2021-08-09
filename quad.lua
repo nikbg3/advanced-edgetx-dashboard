@@ -5,16 +5,6 @@
 
 ------- GLOBALS -------
 
--- I'm using 8 NiMH Batteries in my QX7, which is 1.1v low, and ~1.325v high
-local lowVoltage = 8.8
-local currentVoltage = 10.6
-local highVoltage = 10.6
-
--- For an X-Lite you will need...
-local lowVoltage = 6.6
-local currentVoltage = 8.4
-local highVoltage = 8.4
-
 -- For our timer tracking
 local timerLeft = 0
 local maxTimerValue = 0
@@ -34,15 +24,17 @@ local voltage = 0
 ------- DRAW FUNCTIONS -------
 
 -- Sexy tx voltage icon with % left on battery
-local function drawTransmitterVoltage(x, y, value)
-	local batteryPercent = math.ceil(((((highVoltage - value) / (highVoltage - lowVoltage)) - 1) * -1) * 100)
-	local batteryWidth = 17
+local function drawTransmitterVoltage(x, y)
+	-- Read battery max-min range from radio settings
+	local transmitter = getGeneralSettings()
 
 	-- Battery Outline
+	local batteryWidth = 17
 	lcd.drawRectangle(x, y, batteryWidth + 2, 6, SOLID)
 	lcd.drawLine(x + batteryWidth + 2, y + 1, x + batteryWidth + 2, y + 4, SOLID, FORCE)
 
 	-- Battery Percentage (after battery)
+	local batteryPercent = math.ceil((txvoltage - transmitter.battMin) * 100 / (transmitter.battMax - transmitter.battMin))
 	batteryPercent = batteryPercent <= 0 and 0 or (batteryPercent > 100 and 100 or batteryPercent)
 	lcd.drawText(x + batteryWidth + 5, y, batteryPercent.."%", (batteryPercent < 20 and SMLSIZE + BLINK or SMLSIZE))
 
@@ -278,7 +270,7 @@ local function run(event)
 	lcd.clear()
 
 	-- Draw our sexy voltage in upper left courner
-	drawTransmitterVoltage(0, 0, txvoltage)
+	drawTransmitterVoltage(0, 0)
 
 	-- Draw our model name centered at the upper top of the screen
 	lcd.drawText(screen.w / 2 - math.ceil((#modelName * 5) / 2), 0, modelName, SMLSIZE)
