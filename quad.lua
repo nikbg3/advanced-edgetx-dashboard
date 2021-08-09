@@ -120,7 +120,7 @@ local function drawModeTitle()
 	end
 
 	-- Set up text in top middle of the screen
-	lcd.drawText(64 - math.ceil((#modeText * 5) / 2), 9, modeText, SMLSIZE)
+	lcd.drawText(screen.w / 2 - math.ceil((#modeText * 5) / 2), 9, modeText, SMLSIZE)
 end
 
 -- Animated Quadcopter propellor (zero coords for top left)
@@ -183,8 +183,8 @@ end
 
 -- Current quad battery volatage at the bottom
 local function drawVoltageText(x, y)
-	lcd.drawText(x + (tonumber(voltage) >= 10 and 0 or 7), y, string.format("%.2f", voltage), MIDSIZE)
-	lcd.drawText(x + 31, y + 4, 'v', MEDSIZE)
+	lcd.drawText(x + (tonumber(voltage) >= 10 and 4 or 7), y, string.format("%.2f", voltage), MIDSIZE)
+	lcd.drawText(x + (tonumber(voltage) >= 10 and 35 or 31), y + 4, 'v', MEDSIZE)
 end
 
 -- RSSI value and graph
@@ -281,31 +281,31 @@ local function run(event)
 	drawTransmitterVoltage(0, 0, txvoltage)
 
 	-- Draw our model name centered at the upper top of the screen
-	lcd.drawText(64 - math.ceil((#modelName * 5) / 2), 0, modelName, SMLSIZE)
+	lcd.drawText(screen.w / 2 - math.ceil((#modelName * 5) / 2), 0, modelName, SMLSIZE)
 
 	-- Draw Time in top right courner
-	drawTime(107, 0)
+	drawTime(screen.w - 21, 0)
 
 	-- Draw a horizontal line seperating the header
-	lcd.drawLine(0, 7, 128, 7, SOLID, FORCE)
+	lcd.drawLine(0, 7, screen.w - 1, 7, SOLID, FORCE)
 
 	-- Draw voltage battery graphic in left size
-	drawVoltageImage(3, 10)
+	drawVoltageImage(3, screen.h / 2 - 22)
 
 	-- Draw our mode centered above sexy quad
 	drawModeTitle()
 
 	-- Draw our sexy quadcopter animated (if armed) from scratch in center
-	drawQuadcopter(47, 16)
+	drawQuadcopter(screen.w / 2 - 17,  screen.h / 2 - 15)
 
 	-- Draw Voltage at bottom middle
-	drawVoltageText(45, 50)
+	drawVoltageText(screen.w / 2 - 21, screen.h - 14)
 
 	-- Draw RSSI at right top
-	drawRSSI(84, 9)
+	drawRSSI(screen.w - 44, 9)
 
 	-- Draw our flight timer at right bottom
-	drawFlightTimer(84, 34)
+	drawFlightTimer(screen.w - 44, screen.h - 30)
 
 	return 0
 end
@@ -315,6 +315,9 @@ local function init_func()
 
 	-- The model name from the handset
 	modelName = (modeldata and modeldata['name'] or "Unknown")
+	
+	-- Screen size for positioning
+	screen = {w = LCD_W, h = LCD_H}
 end
 
 return { run = run, init = init_func }
