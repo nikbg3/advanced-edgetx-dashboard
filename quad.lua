@@ -101,15 +101,9 @@ end
 
 -- Current flying mode (predefined)
 local function drawModeTitle()
-	local modeText = "Unknown"
-
-	if mode < -512 then
-		modeText = "Acro"
-	elseif mode > -100 and mode < 100 then
-		modeText = "Angle"
-	elseif mode > 512 then
-		modeText = "Horizon"
-	end
+	-- Define modes and show according to switch position
+	local modeList = {[1] = "Acro", [2] = "Angle", [3] = "Horizon"}
+	local modeText = modeList[(mode + 1024) / 20.48 / 50 + 1] or "Unknown"
 
 	-- Set up text in top middle of the screen
 	lcd.drawText(screen.w / 2 - math.ceil((#modeText * 5) / 2), 9, modeText, SMLSIZE)
@@ -145,6 +139,9 @@ end
 local function drawQuadcopter(x, y)
   	-- A little animation / frame counter to help us with various animations
 	animationIncrement = math.fmod(math.ceil(math.fmod(getTime() / 100, 2) * 8), 4)
+
+	-- Check if we just armed...
+	isArmed = ((armed + 1024) / 20.48 == 100 and 1 or 0)
 
 	-- Top left to bottom right
 	lcd.drawLine(x + 4, y + 4, x + 26, y + 26, SOLID, FORCE)
@@ -247,19 +244,10 @@ local function gatherInput(event)
 	voltage = getValue('VFAS') 
 
 	-- Armed / Disarm / Buzzer switch
-	armed = getValue('sd')
+	armed = getValue('sd') 
 
 	-- Our "mode" switch
 	mode = getValue('sb')
-	
-	-- Check if we just armed...
-	if armed > 512 then
-		isArmed = 1
-	elseif armed < 512 and isArmed == 1 then
-		isArmed = 0
-	else
-		isArmed = 0
-	end
 end
 
 local function run(event)
