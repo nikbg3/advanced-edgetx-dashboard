@@ -2,20 +2,19 @@
 
 A simple lua-based dashboard for the OpenTX Monochrome LCD Transmitters
 
-![opentx-quad-telemetry](https://i.postimg.cc/QM64DBPC/opentx-quad-telemetry.png)
+![opentx-quad-telemetry](https://i.postimg.cc/nzbBKPz6/opentx-quad-telemetry.png)
 
 ## Features
 
 * Transmitter battery status + Model name + Current time
 * Battery voltage (*graphical and numerical)*
-* RSSI signal strength *(graphical and icon)*
+* RX signal strength *(graphical and icon)*
 * Flight Timer - perfect for whooping
 * ANIMATED QUAD WHEN ARMED !
 
 ### Plans
 
-- Taranis X9D LCD support
-- Crossfire LQ status
+- Crossfire support *(RQly, RxBt)*
 - GPS and telemetry screens
 - Settings menu
 
@@ -27,9 +26,9 @@ A simple lua-based dashboard for the OpenTX Monochrome LCD Transmitters
 
 ## Installing
 
-Download the `quad.lua` script above and drag it to your radio.
-
-You should place this into your `/SCRIPTS/TELEMETRY` folder.
+1. Download the `quad.lua` script above.
+1. Open `quad.lua` in notepad and edit **settings** section for you choice.
+1. Place this script into your `/SCRIPTS/TELEMETRY` folder on the radio.
 
 ### Bootloader Method
 
