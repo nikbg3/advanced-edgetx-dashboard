@@ -3,6 +3,17 @@
 -- Git: https://github.com/AndrewFarley/Taranis-XLite-Q7-Lua-Dashboard
 ----------------------------------------------------------
 
+-- Tune this section by yourself before using script
+-- Targets for 3pos switch: 0-50-100
+-- Battery: VFAS, Cels, RxBt 
+
+local settings = {
+	arm = {switch = 'sd', target = 100},
+	mode = {switch = 'sb', list = {'Acro', 'Angle', 'Horizon'}},
+	voltage = {battery = 'VFAS', radio = 'tx-voltage'},
+	telemetry = {countdown = 'timer1'}
+}
+
 ------- DRAW FUNCTIONS -------
 
 -- Sexy tx voltage icon with % left on battery
@@ -80,9 +91,8 @@ end
 
 -- Current flying mode (predefined)
 local function drawModeTitle()
-	-- Define modes and show according to switch position
-	local modeList = {[1] = "Acro", [2] = "Angle", [3] = "Horizon"}
-	local modeText = modeList[(mode + 1024) / 20.48 / 50 + 1] or "Unknown"
+	-- Search mode in settings array and show it according to switch position
+	local modeText = settings.mode.list[(mode + 1024) / 20.48 / 50 + 1] or "Unknown"
 
 	-- Set up text in top middle of the screen
 	lcd.drawText(screen.w / 2 - math.ceil((#modeText * 5) / 2), 9, modeText, SMLSIZE)
@@ -120,7 +130,7 @@ local function drawQuadcopter(x, y)
 	animationIncrement = math.fmod(math.ceil(math.fmod(getTime() / 100, 2) * 8), 4)
 
 	-- Check if we just armed...
-	isArmed = ((armed + 1024) / 20.48 == 100 and 1 or 0)
+	isArmed = ((armed + 1024) / 20.48 == settings.arm.target and 1 or 0)
 
 	-- Top left to bottom right
 	lcd.drawLine(x + 4, y + 4, x + 26, y + 26, SOLID, FORCE)
@@ -209,7 +219,7 @@ local function gatherInput(event)
 	rssi = getRSSI()
 
 	-- Get the seconds left in our timer
-	timerLeft = getValue('timer1')
+	timerLeft = getValue(settings.telemetry.countdown)
 
 	-- And set our max timer if it's bigger than our current max timer
 	if timerLeft > timerMax then
@@ -217,16 +227,16 @@ local function gatherInput(event)
 	end
 
 	-- Get our current transmitter voltage
-	txvoltage = getValue('tx-voltage')
+	txvoltage = getValue(settings.voltage.radio)
 
-	-- Our quad battery ? 'Cels' or 'RxBt' - For miniwhoop seems more accurate
-	voltage = getValue('VFAS') 
+	-- Our quad battery
+	voltage = getValue(settings.voltage.battery) 
 
 	-- Armed / Disarm / Buzzer switch
-	armed = getValue('sd') 
+	armed = getValue(settings.arm.switch) 
 
 	-- Our "mode" switch
-	mode = getValue('sb')
+	mode = getValue(settings.mode.switch) 
 end
 
 local function run(event)
