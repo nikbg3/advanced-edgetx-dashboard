@@ -3,31 +3,10 @@
 -- Git: https://github.com/AndrewFarley/Taranis-XLite-Q7-Lua-Dashboard
 ----------------------------------------------------------
 
-------- GLOBALS -------
-
--- For our timer tracking
-local timerLeft = 0
-local maxTimerValue = 0
--- For armed drawing
-local armed = 0
--- For mode drawing
-local mode = 0
--- Animation increment
-local animationIncrement = 0
--- is off trying to go on...
-local isArmed = 0
--- Our global to get our current rssi
-local rssi = 0
--- Global for quad voltage
-local voltage = 0
-
 ------- DRAW FUNCTIONS -------
 
 -- Sexy tx voltage icon with % left on battery
 local function drawTransmitterVoltage(x, y)
-	-- Read battery max-min range from radio settings
-	local transmitter = getGeneralSettings()
-
 	-- Battery Outline
 	local batteryWidth = 17
 	lcd.drawRectangle(x, y, batteryWidth + 2, 6, SOLID)
@@ -216,7 +195,7 @@ local function drawFlightTimer(x, y)
 	lcd.drawTimer(x + 2, y + 11, math.abs(timerLeft), (timerLeft >= 0 and DBLSIZE or DBLSIZE + BLINK))
 
 	-- Fill the background
-	for offset = 0, timerLeft / maxTimerValue * 42, 1 do
+	for offset = 0, timerLeft / timerMax * 42, 1 do
 		lcd.drawLine(x + offset, y + 10, x + offset, y + 28, SOLID, 0)
 	end
 
@@ -233,8 +212,8 @@ local function gatherInput(event)
 	timerLeft = getValue('timer1')
 
 	-- And set our max timer if it's bigger than our current max timer
-	if timerLeft > maxTimerValue then
-		maxTimerValue = timerLeft
+	if timerLeft > timerMax then
+		timerMax = timerLeft
 	end
 
 	-- Get our current transmitter voltage
@@ -293,9 +272,15 @@ end
 local function init_func()
 	local modeldata = model.getInfo()
 
+	-- For our timer tracking
+	timerMax = 0
+
 	-- The model name from the handset
 	modelName = (modeldata and modeldata['name'] or "Unknown")
-	
+
+	-- Read battery max-min range from radio settings
+	transmitter = getGeneralSettings()
+
 	-- Screen size for positioning
 	screen = {w = LCD_W, h = LCD_H}
 end
