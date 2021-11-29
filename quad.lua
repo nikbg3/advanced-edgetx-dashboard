@@ -1,7 +1,10 @@
-----------------------------------------------------------
+----------------------------------------------------------------------
 -- Original script by Andrew Farley - farley@neonsurge(dot)com
 -- Git: https://github.com/AndrewFarley/Taranis-XLite-Q7-Lua-Dashboard
-----------------------------------------------------------
+--
+-- Optimization and modding by Alexey Gamov - dev@alexey-gamov(dot)ru
+-- Git: https://github.com/alexey-gamov/opentx-quad-telemetry
+----------------------------------------------------------------------
 
 -- Tune this section by yourself before using script
 -- Targets for 3pos switch: 0-50-100
@@ -38,12 +41,9 @@ end
 local function drawTime(x, y)
 	local timeNow = getDateTime()
 
-	local min = string.format("%02.0f", timeNow.min)
-	local hour = string.format("%02.0f", timeNow.hour) .. (math.ceil(math.fmod(getTime() / 100, 2)) == 1 and ":" or "")
-
 	-- Time as text
-	lcd.drawText(x, y, hour, SMLSIZE)
-	lcd.drawText(x + 12, y, min, SMLSIZE)
+	lcd.drawText(x, y, string.format("%02.0f%s", timeNow.hour, math.ceil(math.fmod(getTime() / 100, 2)) == 1 and ":" or ""), SMLSIZE)
+	lcd.drawText(x + 12, y, string.format("%02.0f", timeNow.min), SMLSIZE)
 
 	-- Clock icon
 	lcd.drawLine(x - 7, y + 0, x - 4, y + 0, SOLID, FORCE)
@@ -56,8 +56,8 @@ end
 
 -- Big and sexy battery graphic
 local function drawVoltageImage(x, y)
-	local voltageLow = 3.3
 	local voltageHigh = 4.35
+	local voltageLow = 3.3
 	local batteryWidth = 12
 
 	-- Draw our battery outline
@@ -68,7 +68,7 @@ local function drawVoltageImage(x, y)
 	lcd.drawLine(x + batteryWidth, y + 3, x + batteryWidth, y + 49, SOLID, 0)
 
 	-- Draw battery markers from top to bottom
-	lcd.drawLine(x + batteryWidth - math.ceil(batteryWidth / 4), y + 8, x + batteryWidth - 1, y + 8, SOLID, 0)
+	lcd.drawLine(x + batteryWidth - math.ceil(batteryWidth / 4), y + 08, x + batteryWidth - 1, y + 08, SOLID, 0)
 	lcd.drawLine(x + batteryWidth - math.ceil(batteryWidth / 2), y + 14, x + batteryWidth - 1, y + 14, SOLID, 0)
 	lcd.drawLine(x + batteryWidth - math.ceil(batteryWidth / 4), y + 20, x + batteryWidth - 1, y + 20, SOLID, 0)
 	lcd.drawLine(x + 1, y + 26, x + batteryWidth - 1, y + 26, SOLID, 0)
@@ -77,9 +77,9 @@ local function drawVoltageImage(x, y)
 	lcd.drawLine(x + batteryWidth - math.ceil(batteryWidth / 4), y + 44, x + batteryWidth - 1, y + 44, SOLID, 0)
 
 	-- Place voltage text [top, middle, bottom]
-	lcd.drawText(x + batteryWidth + 4, y + 0, voltageHigh.."v", SMLSIZE)
-	lcd.drawText(x + batteryWidth + 4, y + 24, string.format("%.2f", (voltageHigh - voltageLow) / 2 + voltageLow).."v", SMLSIZE)
-	lcd.drawText(x + batteryWidth + 4, y + 47, voltageLow.."v", SMLSIZE)
+	lcd.drawText(x + batteryWidth + 4, y + 00, string.format("%.2fv", voltageHigh), SMLSIZE)
+	lcd.drawText(x + batteryWidth + 4, y + 24, string.format("%.2fv", (voltageHigh - voltageLow) / 2 + voltageLow), SMLSIZE)
+	lcd.drawText(x + batteryWidth + 4, y + 47, string.format("%.2fv", voltageLow), SMLSIZE)
 
 	-- Now draw how full our voltage is...
 	for offset = 0, 46, 1 do
@@ -96,6 +96,9 @@ local function drawModeTitle()
 
 	-- Set up text in top middle of the screen
 	lcd.drawText(screen.w / 2 - math.ceil((#modeText * 5) / 2), 9, modeText, SMLSIZE)
+
+	-- Check if we just armed
+	isArmed = ((armed + 1024) / 20.48 == settings.arm.target and 1 or 0)
 end
 
 -- Animated Quadcopter propellor (zero coords for top left)
@@ -128,9 +131,6 @@ end
 local function drawQuadcopter(x, y)
   	-- A little animation / frame counter to help us with various animations
 	animationIncrement = math.fmod(math.ceil(math.fmod(getTime() / 100, 2) * 8), 4)
-
-	-- Check if we just armed...
-	isArmed = ((armed + 1024) / 20.48 == settings.arm.target and 1 or 0)
 
 	-- Top left to bottom right
 	lcd.drawLine(x + 4, y + 4, x + 26, y + 26, SOLID, FORCE)
@@ -165,28 +165,28 @@ local function drawVoltageText(x, y)
 	lcd.drawText(x + (tonumber(voltage) >= 10 and 35 or 31), y + 4, 'v', MEDSIZE)
 end
 
--- RSSI value and graph
-local function drawRSSI(x, y)
+-- Signal strength value and graph
+local function drawLink(x, y)
 	-- Draw main frame and title
 	lcd.drawRectangle(x, y, 44, 10)
-
-	lcd.drawText(x + 2, y + 2, "RSSI:", SMLSIZE)
-	lcd.drawText(x + 24, y + 2, rssi, (rssi < 50 and SMLSIZE + BLINK or SMLSIZE))
-
 	lcd.drawRectangle(x, y + 9, 44, 15, SOLID)
 
-	if rssi > 0 then
+	-- Draw caption and value
+	lcd.drawText(x + 2, y + 2, "RSSI:", SMLSIZE)
+	lcd.drawText(x + 24, y + 2, link, (link < 50 and SMLSIZE + BLINK or SMLSIZE))
+
+	if link > 0 then
 		-- Fill the bar
-		for i = 2, rssi + 2, 2 do
+		for i = 2, link + 2, 2 do
 			lcd.drawLine(x + 1 + i / 2.5, y + 20 - i / 10, x + 1 + i / 2.5, y + 22, SOLID, FORCE)
 		end
 
 		-- Last pixel filling
-		if rssi >= 99 then
+		if link >= 99 then
 			lcd.drawLine(x + 42, y + 10, x + 42, y + 22, SOLID, FORCE)
 		end
 
-		-- RSSI icon visible if value > 0
+		-- Link icon visible if value > 0
 		lcd.drawLine(x + 35, y + 3, x + 35, y + 3, SOLID, FORCE)
 		lcd.drawLine(x + 36, y + 2, x + 40, y + 2, SOLID, FORCE)
 		lcd.drawLine(x + 41, y + 3, x + 41, y + 3, SOLID, FORCE)
@@ -199,8 +199,7 @@ end
 
 -- Flight timer counts from black to white
 local function drawFlightTimer(x, y)
-	-- Draw main frame and title
-	lcd.drawRectangle(x, y, 44, 10)
+	-- Draw caption and value
 	lcd.drawText(x + 2, y + 2, "Fly Timer", SMLSIZE)	
 	lcd.drawTimer(x + 2, y + 11, math.abs(timerLeft), (timerLeft >= 0 and DBLSIZE or DBLSIZE + BLINK))
 
@@ -209,22 +208,16 @@ local function drawFlightTimer(x, y)
 		lcd.drawLine(x + offset, y + 10, x + offset, y + 28, SOLID, 0)
 	end
 
+	-- Draw main frame and title
+	lcd.drawRectangle(x, y, 44, 10)
 	lcd.drawRectangle(x, y + 9, 44, 20, SOLID)
 end
 
 ------- MAIN FUNCTIONS -------
 
 local function gatherInput(event)
-	-- Get our RSSI
-	rssi = getRSSI()
-
-	-- Get the seconds left in our timer
-	timerLeft = getValue(settings.telemetry.countdown)
-
-	-- And set our max timer if it's bigger than our current max timer
-	if timerLeft > timerMax then
-		timerMax = timerLeft
-	end
+	-- Get our signal strength
+	link = getRSSI()
 
 	-- Get our current transmitter voltage
 	txvoltage = getValue(settings.voltage.radio)
@@ -237,6 +230,10 @@ local function gatherInput(event)
 
 	-- Our "mode" switch
 	mode = getValue(settings.mode.switch) 
+
+	-- Get seconds left in timer and set out max value if it's bigger than current max timer
+	timerLeft = getValue(settings.telemetry.countdown)
+	timerMax = (timerLeft > timerMax) and timerLeft or timerMax
 end
 
 local function run(event)
@@ -270,8 +267,8 @@ local function run(event)
 	-- Draw Voltage at bottom middle
 	drawVoltageText(screen.w / 2 - 21, screen.h - 14)
 
-	-- Draw RSSI at right top
-	drawRSSI(screen.w - 44, 9)
+	-- Draw signal strength at right top
+	drawLink(screen.w - 44, 9)
 
 	-- Draw our flight timer at right bottom
 	drawFlightTimer(screen.w - 44, screen.h - 30)
@@ -282,9 +279,6 @@ end
 local function init_func()
 	local modeldata = model.getInfo()
 
-	-- For our timer tracking
-	timerMax = 0
-
 	-- The model name from the handset
 	modelName = (modeldata and modeldata['name'] or "Unknown")
 
@@ -293,6 +287,9 @@ local function init_func()
 
 	-- Screen size for positioning
 	screen = {w = LCD_W, h = LCD_H}
+
+	-- For our timer tracking
+	timerMax = 0
 end
 
 return { run = run, init = init_func }
