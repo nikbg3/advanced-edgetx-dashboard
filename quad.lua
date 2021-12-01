@@ -6,9 +6,8 @@
 -- Git: https://github.com/alexey-gamov/opentx-quad-telemetry
 ----------------------------------------------------------------------
 
--- Tune this section by yourself before using script
--- Targets for 3pos switch: 0-50-100
--- Battery: VFAS, Cels, RxBt 
+-- Tune this section before using script (no need for crossfire users)
+-- Targets for 3pos switch: 0-50-100. Battery option: VFAS, Cels, RxBt 
 
 local settings = {
 	arm = {switch = 'sd', target = 100},
@@ -91,14 +90,28 @@ end
 
 -- Current flying mode (predefined)
 local function drawModeTitle()
-	-- Search mode in settings array and show it according to switch position
-	local modeText = settings.mode.list[(mode + 1024) / 20.48 / 50 + 1] or "Unknown"
+	if crsf then
+		local fm = {
+			['!FS!'] = 'Failsafe', ['!ERR'] = 'Error', ['STAB'] = 'Angle',
+			['MANU'] = 'Manual', ['HOR'] = 'Horizon', ['RTH'] = 'Return'
+		}
+
+		-- Make some prep to show good mode name
+		modeText = string.gsub(mode, "%*", "")
+		modeText = fm[string.sub(modeText, 1, 4)] or modeText
+
+		-- In BF 4.0+ flight mode ends with '*' when not armed
+		isArmed = (string.sub(mode, -1) ~= "*" and 1 or 0)
+	else
+		-- Search mode in settings array and show it according to switch position
+		modeText = settings.mode.list[(mode + 1024) / 20.48 / 50 + 1] or "Unknown"
+		
+		-- Check if we are armed by a switch
+		isArmed = ((armed + 1024) / 20.48 == settings.arm.target and 1 or 0)
+	end
 
 	-- Set up text in top middle of the screen
 	lcd.drawText(screen.w / 2 - math.ceil((#modeText * 5) / 2), 9, modeText, SMLSIZE)
-
-	-- Check if we just armed
-	isArmed = ((armed + 1024) / 20.48 == settings.arm.target and 1 or 0)
 end
 
 -- Animated Quadcopter propellor (zero coords for top left)
@@ -171,14 +184,23 @@ local function drawLink(x, y)
 	lcd.drawRectangle(x, y, 44, 10)
 	lcd.drawRectangle(x, y + 9, 44, 15, SOLID)
 
-	-- Draw caption and value
-	lcd.drawText(x + 2, y + 2, "RSSI:", SMLSIZE)
-	lcd.drawText(x + 24, y + 2, link, (link < 50 and SMLSIZE + BLINK or SMLSIZE))
+	-- Draw caption and value, blink if low
+	lcd.drawText(x + 2, y + 2, (crsf and "LQ" or "RSSI") .. ":", SMLSIZE)
+	lcd.drawText(x + (crsf and 15 or 24), y + 2, link, (link < 50 and SMLSIZE + BLINK or SMLSIZE))
 
 	if link > 0 then
-		-- Fill the bar
+		-- Add dots to background if showing LQ
+		if crsf then
+			for i = 2, 41, 2 do
+				for j = 1, 11, 2 do
+					lcd.drawLine(x + 1 + i, y + 10 + j, x + 1 + i, y + 10 + j, SOLID, FORCE)
+				end
+			end
+		end
+
+		-- Fill the bar (vertiсally or diagonally)
 		for i = 2, link + 2, 2 do
-			lcd.drawLine(x + 1 + i / 2.5, y + 20 - i / 10, x + 1 + i / 2.5, y + 22, SOLID, FORCE)
+			lcd.drawLine(x + 1 + i / 2.5, y + (crsf and 10 or 20 - i / 10), x + 1 + i / 2.5, y + 22, SOLID, FORCE)
 		end
 
 		-- Last pixel filling
@@ -216,20 +238,23 @@ end
 ------- MAIN FUNCTIONS -------
 
 local function gatherInput(event)
+	-- Detect if model has crossfire telemetry
+	crsf = getFieldInfo("TQly") and getFieldInfo("RxBt")
+
 	-- Get our signal strength
-	link = getRSSI()
+	link = crsf and getValue("TQly") or getRSSI()
 
 	-- Get our current transmitter voltage
 	txvoltage = getValue(settings.voltage.radio)
 
 	-- Our quad battery
-	voltage = getValue(settings.voltage.battery) 
+	voltage = getValue(crsf and "RxBt" or settings.voltage.battery)
 
 	-- Armed / Disarm / Buzzer switch
-	armed = getValue(settings.arm.switch) 
+	armed = getValue(settings.arm.switch)
 
 	-- Our "mode" switch
-	mode = getValue(settings.mode.switch) 
+	mode = getValue(crsf and "FM" or settings.mode.switch)
 
 	-- Get seconds left in timer and set out max value if it's bigger than current max timer
 	timerLeft = getValue(settings.telemetry.countdown)
