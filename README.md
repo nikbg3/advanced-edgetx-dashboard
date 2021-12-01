@@ -6,58 +6,55 @@ A simple lua-based dashboard for the OpenTX Monochrome LCD Transmitters
 
 ## Features
 
-* Transmitter battery status + Model name + Current time
-* Battery voltage (*graphical and numerical)*
-* RX signal strength *(graphical and icon)*
-* Flight Timer - perfect for whooping
+* Transmitter battery + Model name + Time
+* Battery voltage (graphical and numerical)
+* RX signal strength (graphical and icon)
+* Flight Timer *(perfect for whooping)*
 * ANIMATED QUAD WHEN ARMED !
 
-### Plans
+### Additional
 
-- Crossfire support *(RQly, RxBt)*
-- GPS and telemetry screens
-- Settings menu
+- Works with bigger screens *(Tango2, X9D)*
+- Crossfire telemetry support
 
 ## Author
 
 * Original script by Andrew Farley - farley@neonsurge(dot)com
-* Video: [Farleys Lua Dashboard - by DroneRacer101](http://www.youtube.com/watch?v=ijMYaCudgWI)
 * Git: https://github.com/AndrewFarley/Taranis-XLite-Q7-Lua-Dashboard
 
 ## Installing
 
-1. Download the `quad.lua` script above.
+1. Download the `quad.lua` script above **(code -> download zip)**.
 1. Open `quad.lua` in notepad and edit **settings** section for you choice.
 1. Place this script into your `/SCRIPTS/TELEMETRY` folder on the radio.
 
-### Bootloader Method
+#### Bootloader Method
 
-1. Power off your transmitter and power it back on in boot loader mode.
+1. Power off your transmitter and power it back on in bootloader mode.
 1. Connect a USB cable and open the SD card drive on your computer.
-1. Download and copy the the scripts to appropriate location on your SD card.
+1. Put the script file to appropriate folder.
 1. Unplug the USB cable and power cycle your transmitter.
 
-### Manual method *(varies, based on the model of your transmitter)*
+#### Manual method *(varies, based on the model of your transmitter)*
 
 1. Power off your transmitter.
 1. Remove the SD card and plug it into a computer
-1. Download and copy the the scripts to appropriate location on your SD card.
-1. Reinsert your SD card into the transmitter
+1. Put the script file to appropriate folder.
+1. Reinsert your SD card into the transmitter.
 1. Power up your transmitter.
 
-If you copied the files correctly, you can now go into the **telemetry screen setup page** and set up the script as telemetry page.
+If you copied the files correctly, you can now follow next step and **set up the script as telemetry page**.
 
 ## Adding the script as a telemetry page
-  
-Setting up the script as a telemetry page will enable access at the press of a button.
 
-These instructions are for the **X-Lite**. The **Q7** will also work but the instructions will be a bit different.
+These instructions are for the **X-Lite**, so please be aware the steps may vary slightly for your device.
 
-1. Hold the circular eraser `D-Pad` on the right side of the controller to the right until the `Model Selection` menu comes up.
-1. Press the `eraser` to the left briefly to rotate to page **13/13** *(top right)*
-1. Press the `eraser` to the bottom position to select the **first screen** *(which should say none)*
-1. Press down on the `eraser` so the **None** is flashing
-1. Press right on the `eraser` repeatedly until it goes to **Script**, then press down on the `eraser` to confirm.
-1. Press right on the `eraser` to select which script, then press down on the `eraser` should bring up a menu, and **quad** should be in there, select it and press down on the `eraser`.
-1. Press the `bottom button` to back out to the **main menu**.
-1. From now on, while on the main menu with this model, simply move the `eraser` to the bottom position for about 2 seconds and it will activate your **first telemetry screen**!
+1. Hit the <kbd>MENU</kbd> button and select the model for which you would like to enable the script.
+1. While on the `MODEL SEL` screen, long-press the <kbd>PAGE</kbd> button to navigate to the `DISPLAY` page.
+1. Move the cursor to a free screen and hit <kbd>ENTER</kbd>.
+1. Scroll and select the `Script` option and press <kbd>ENTER</kbd>.
+1. Move the cursor to the script selection field `---` and hit <kbd>ENTER</kbd>.
+1. Select one of the listed telemetry scripts and press <kbd>ENTER</kbd>.
+1. Long-press <kbd>EXIT</kbd> to return to your model screen.
+
+To **invoke the script**, simply long-press the <kbd>PAGE</kbd> button from the **model screen**.
