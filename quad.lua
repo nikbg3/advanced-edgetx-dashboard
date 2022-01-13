@@ -55,9 +55,28 @@ end
 
 -- Big and sexy battery graphic
 local function drawVoltageImage(x, y)
-	local voltageHigh = 4.35
-	local voltageLow = 3.3
 	local batteryWidth = 12
+	local batt, cell = 0, 0
+
+	-- Try to calculate cells count from batt voltage or skip if using Cels telemetry
+	-- Don't support 5s and 7s packs - it's dangerous to detect, coz empty 8s look like an 7s!
+	if (type(voltage) == "table") then
+		for i, v in ipairs(voltage) do
+			batt = batt + v
+			cell = cell + 1
+		end
+
+		voltage = batt
+	else
+		cell = math.ceil(voltage / 4.37)
+		cell = cell == (5 or 7) and cell + 1 or cell
+
+		batt = voltage
+	end
+
+	-- Set mix-max battery cell value, also detect HV type
+	local voltageHigh = (batt > 4.22 * cell) and 4.35 or 4.2
+	local voltageLow = 3.3
 
 	-- Draw our battery outline
 	lcd.drawLine(x + 2, y + 1, x + batteryWidth - 2, y + 1, SOLID, 0)
@@ -80,9 +99,9 @@ local function drawVoltageImage(x, y)
 	lcd.drawText(x + batteryWidth + 4, y + 24, string.format("%.2fv", (voltageHigh - voltageLow) / 2 + voltageLow), SMLSIZE)
 	lcd.drawText(x + batteryWidth + 4, y + 47, string.format("%.2fv", voltageLow), SMLSIZE)
 
-	-- Now draw how full our voltage is...
+	-- Now draw how full our avarage cells voltage is...
 	for offset = 0, 46, 1 do
-		if ((offset * (voltageHigh - voltageLow) / 47) + voltageLow) < tonumber(voltage) then
+		if ((offset * (voltageHigh - voltageLow) / 47) + voltageLow) < tonumber(batt / cell) then
 			lcd.drawLine(x + 1, y + 49 - offset, x + batteryWidth - 1, y + 49 - offset, SOLID, 0)
 		end
 	end
