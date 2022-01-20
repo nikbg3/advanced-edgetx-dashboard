@@ -20,17 +20,17 @@ local settings = {
 
 -- Sexy tx voltage icon with % left on battery
 local function drawTransmitterVoltage(x, y)
-	-- Battery Outline
+	-- Battery outline
 	local batteryWidth = 17
 	lcd.drawRectangle(x, y, batteryWidth + 2, 6, SOLID)
 	lcd.drawLine(x + batteryWidth + 2, y + 1, x + batteryWidth + 2, y + 4, SOLID, FORCE)
 
-	-- Battery Percentage (after battery)
+	-- Battery percentage (after battery)
 	local batteryPercent = math.ceil((txvoltage - transmitter.battMin) * 100 / (transmitter.battMax - transmitter.battMin))
 	batteryPercent = batteryPercent <= 0 and 0 or (batteryPercent > 100 and 100 or batteryPercent)
-	lcd.drawText(x + batteryWidth + 5, y, batteryPercent.."%", (batteryPercent < 20 and SMLSIZE + BLINK or SMLSIZE))
+	lcd.drawText(x + batteryWidth + 5, y, batteryPercent.."%", SMLSIZE + (batteryPercent > 20 and 0 or BLINK))
 
-	-- Filled in battery
+	-- Fill the battery
 	local batteryFill = math.ceil((batteryPercent / 100) * batteryWidth)
 	lcd.drawRectangle(x, y + 1, batteryFill + 1, 4, SOLID)
 	lcd.drawRectangle(x, y + 2, batteryFill + 1, 2, SOLID)
@@ -40,20 +40,20 @@ end
 local function drawTime(x, y)
 	local timeNow = getDateTime()
 
-	-- Time as text
-	lcd.drawText(x, y, string.format("%02.0f%s", timeNow.hour, math.ceil(math.fmod(getTime() / 100, 2)) == 1 and ":" or ""), SMLSIZE)
-	lcd.drawText(x + 12, y, string.format("%02.0f", timeNow.min), SMLSIZE)
-
 	-- Clock icon
-	lcd.drawLine(x - 7, y + 0, x - 4, y + 0, SOLID, FORCE)
-	lcd.drawLine(x - 8, y + 1, x - 8, y + 4, SOLID, FORCE)
-	lcd.drawLine(x - 3, y + 1, x - 3, y + 4, SOLID, FORCE)
-	lcd.drawLine(x - 6, y + 2, x - 6, y + 3, SOLID, FORCE)
-	lcd.drawLine(x - 6, y + 3, x - 5, y + 3, SOLID, FORCE)
-	lcd.drawLine(x - 7, y + 5, x - 4, y + 5, SOLID, FORCE)
+	lcd.drawLine(x + 1, y + 0, x + 4, y + 0, SOLID, FORCE)
+	lcd.drawLine(x + 0, y + 1, x + 0, y + 4, SOLID, FORCE)
+	lcd.drawLine(x + 5, y + 1, x + 5, y + 4, SOLID, FORCE)
+	lcd.drawLine(x + 2, y + 2, x + 2, y + 3, SOLID, FORCE)
+	lcd.drawLine(x + 2, y + 3, x + 3, y + 3, SOLID, FORCE)
+	lcd.drawLine(x + 1, y + 5, x + 4, y + 5, SOLID, FORCE)
+
+	-- Time as text
+	lcd.drawText(x + 08, y, string.format("%02.0f%s", timeNow.hour, math.ceil(tick) == 1 and "" or ":"), SMLSIZE)
+	lcd.drawText(x + 20, y, string.format("%02.0f", timeNow.min), SMLSIZE)
 end
 
--- Big and sexy battery graphic
+-- Big and sexy battery graphic with average cell voltage
 local function drawVoltageImage(x, y)
 	local batteryWidth = 12
 	local batt, cell = 0, 0
@@ -78,7 +78,7 @@ local function drawVoltageImage(x, y)
 	local voltageHigh = (batt > 4.22 * cell) and 4.35 or 4.2
 	local voltageLow = 3.3
 
-	-- Draw our battery outline
+	-- Draw battery outline
 	lcd.drawLine(x + 2, y + 1, x + batteryWidth - 2, y + 1, SOLID, 0)
 	lcd.drawLine(x, y + 2, x + batteryWidth - 1, y + 2, SOLID, 0)
 	lcd.drawLine(x, y + 2, x, y + 50, SOLID, 0)
@@ -99,7 +99,7 @@ local function drawVoltageImage(x, y)
 	lcd.drawText(x + batteryWidth + 4, y + 24, string.format("%.2fv", (voltageHigh - voltageLow) / 2 + voltageLow), SMLSIZE)
 	lcd.drawText(x + batteryWidth + 4, y + 47, string.format("%.2fv", voltageLow), SMLSIZE)
 
-	-- Now draw how full our avarage cells voltage is...
+	-- Fill the battery
 	for offset = 0, 46, 1 do
 		if ((offset * (voltageHigh - voltageLow) / 47) + voltageLow) < tonumber(batt / cell) then
 			lcd.drawLine(x + 1, y + 49 - offset, x + batteryWidth - 1, y + 49 - offset, SOLID, 0)
@@ -108,7 +108,7 @@ local function drawVoltageImage(x, y)
 end
 
 -- Current flying mode (predefined)
-local function drawModeTitle()
+local function drawModeTitle(x, y)
 	if crsf then
 		local fm = {
 			['!FS!'] = 'Failsafe', ['!ERR'] = 'Error', ['STAB'] = 'Angle',
@@ -120,22 +120,22 @@ local function drawModeTitle()
 		modeText = fm[string.sub(modeText, 1, 4)] or modeText
 
 		-- In BF 4.0+ flight mode ends with '*' when not armed
-		isArmed = (string.sub(mode, -1) ~= "*" and 1 or 0)
+		isArmed = string.sub(mode, -1) ~= "*"
 	else
 		-- Search mode in settings array and show it according to switch position
 		modeText = settings.mode.list[(mode + 1024) / 20.48 / 50 + 1] or "Unknown"
-		
-		-- Check if we are armed by a switch
-		isArmed = ((armed + 1024) / 20.48 == settings.arm.target and 1 or 0)
+
+		-- Check if quad is armed by a switch
+		isArmed = ((armed + 1024) / 20.48 == settings.arm.target) and link > 0
 	end
 
 	-- Set up text in top middle of the screen
-	lcd.drawText(screen.w / 2 - math.ceil((#modeText * 5) / 2), 9, modeText, SMLSIZE)
+	lcd.drawText(x - math.ceil((#modeText * 5) / 2), y, modeText, SMLSIZE)
 end
 
 -- Animated Quadcopter propellor (zero coords for top left)
 local function drawPropellor(x, y, invert)
-	local animation = animationIncrement
+	local animation = frame
 
 	-- Must spin opposite side if inverted
 	if invert == true then
@@ -144,16 +144,16 @@ local function drawPropellor(x, y, invert)
 	end
 
 	-- Prop phase accoring to step and ARM state
-	if (isArmed == 0 and invert == false) or (isArmed == 1 and animation == 0) then
+	if (not isArmed and not invert) or (isArmed and animation == 0) then
 		lcd.drawLine(x + 1, y + 9, x + 9, y + 1, SOLID, FORCE)
 		lcd.drawLine(x + 1, y + 10, x + 8, y + 1, SOLID, FORCE)
-	elseif isArmed == 1 and animation == 1 then
+	elseif (isArmed and animation == 1) then
 		lcd.drawLine(x, y + 5, x + 9, y + 5, SOLID, FORCE)
 		lcd.drawLine(x, y + 4, x + 9, y + 6, SOLID, FORCE)
-	elseif (isArmed == 0 and invert == true) or (isArmed == 1 and animation == 2) then
+	elseif (not isArmed and invert) or (isArmed and animation == 2) then
 		lcd.drawLine(x + 1, y + 1, x + 9, y + 9, SOLID, FORCE)
 		lcd.drawLine(x + 1, y + 2, x + 10, y + 9, SOLID, FORCE)
-	elseif isArmed == 1 and animation == 3 then
+	elseif (isArmed and animation == 3) then
 		lcd.drawLine(x + 5, y, x + 5, y + 10, SOLID, FORCE)
 		lcd.drawLine(x + 6, y, x + 4, y + 10, SOLID, FORCE)
 	end
@@ -161,8 +161,8 @@ end
 
 -- A sexy helper to draw a 30x30 quadcopter
 local function drawQuadcopter(x, y)
-  	-- A little animation / frame counter to help us with various animations
-	animationIncrement = math.fmod(math.ceil(math.fmod(getTime() / 100, 2) * 8), 4)
+  	-- A little frame counter to help us with various animations
+	frame = math.fmod(math.ceil(tick * 8), 4)
 
 	-- Top left to bottom right
 	lcd.drawLine(x + 4, y + 4, x + 26, y + 26, SOLID, FORCE)
@@ -184,11 +184,9 @@ local function drawQuadcopter(x, y)
 	drawPropellor(x + 20, y + 20, false)
 	drawPropellor(x + 20, y, true)
 	drawPropellor(x, y + 20, true)
-	
+
 	-- ARMED text
-	if isArmed == 1 then
-		lcd.drawText(x + 3, y + 12, "ARMED", SMLSIZE + BLINK)
-	end
+	lcd.drawText(x + 3, y + 12, isArmed and "ARMED" or "", SMLSIZE + BLINK)
 end
 
 -- Current quad battery volatage at the bottom
@@ -199,13 +197,13 @@ end
 
 -- Signal strength value and graph
 local function drawLink(x, y)
-	-- Draw main frame and title
+	-- Draw main border
 	lcd.drawRectangle(x, y, 44, 10)
 	lcd.drawRectangle(x, y + 9, 44, 15, SOLID)
 
 	-- Draw caption and value, blink if low
 	lcd.drawText(x + 2, y + 2, (crsf and "LQ" or "RSSI") .. ":", SMLSIZE)
-	lcd.drawText(x + (crsf and 15 or 24), y + 2, link, (link < 50 and SMLSIZE + BLINK or SMLSIZE))
+	lcd.drawText(x + (crsf and 15 or 24), y + 2, link, SMLSIZE + (link > 50 and 0 or BLINK))
 
 	if link > 0 then
 		-- Add dots to background if showing LQ
@@ -240,18 +238,18 @@ end
 
 -- Flight timer counts from black to white
 local function drawFlightTimer(x, y)
-	-- Draw caption and value
-	lcd.drawText(x + 2, y + 2, "Fly Timer", SMLSIZE)	
-	lcd.drawTimer(x + 2, y + 11, math.abs(timerLeft), (timerLeft >= 0 and DBLSIZE or DBLSIZE + BLINK))
-
-	-- Fill the background
-	for offset = 0, timerLeft / timerMax * 42, 1 do
-		lcd.drawLine(x + offset, y + 10, x + offset, y + 28, SOLID, 0)
-	end
-
-	-- Draw main frame and title
+	-- Draw main border
 	lcd.drawRectangle(x, y, 44, 10)
 	lcd.drawRectangle(x, y + 9, 44, 20, SOLID)
+
+	-- Draw caption and timer text
+	lcd.drawText(x + 2, y + 2, "Fly Timer", SMLSIZE)
+	lcd.drawTimer(x + 2, y + 11, math.abs(timerLeft), DBLSIZE + (timerLeft >= 0 and 0 or BLINK))
+
+	-- Fill the background
+	for offset = 1, timerLeft / timerMax * 42, 1 do
+		lcd.drawLine(x + offset, y + 10, x + offset, y + 27, SOLID, 0)
+	end
 end
 
 ------- MAIN FUNCTIONS -------
@@ -260,41 +258,44 @@ local function gatherInput(event)
 	-- Detect if model has crossfire telemetry
 	crsf = getFieldInfo("TQly") and getFieldInfo("RxBt")
 
-	-- Get our signal strength
+	-- Get RX signal strength source
 	link = crsf and getValue("TQly") or getRSSI()
 
-	-- Get our current transmitter voltage
+	-- Get current transmitter voltage
 	txvoltage = getValue(settings.voltage.radio)
 
-	-- Our quad battery
+	-- Get quad battery voltage source
 	voltage = getValue(crsf and "RxBt" or settings.voltage.battery)
 
-	-- Armed / Disarm / Buzzer switch
+	-- Arm switch source
 	armed = getValue(settings.arm.switch)
 
-	-- Our "mode" switch
+	-- Current fly mode source 
 	mode = getValue(crsf and "FM" or settings.mode.switch)
 
-	-- Get seconds left in timer and set out max value if it's bigger than current max timer
+	-- Get seconds left in model timer
 	timerLeft = getValue(settings.telemetry.countdown)
 	timerMax = (timerLeft > timerMax) and timerLeft or timerMax
+	
+	-- Animation helper
+	tick = math.fmod(getTime() / 100, 2)
 end
 
 local function run(event)
-	-- Gather input from the user
+	-- Gather telemetry data
 	gatherInput(event)
 
-	-- Now begin drawing...
+	-- Begin drawing
 	lcd.clear()
 
-	-- Draw our sexy voltage in upper left courner
+	-- Draw sexy voltage in upper left courner
 	drawTransmitterVoltage(0, 0)
 
-	-- Draw our model name centered at the upper top of the screen
+	-- Draw model name centered at the upper top of the screen
 	lcd.drawText(screen.w / 2 - math.ceil((#modelName * 5) / 2), 0, modelName, SMLSIZE)
 
-	-- Draw Time in top right courner
-	drawTime(screen.w - 21, 0)
+	-- Draw time in top right courner
+	drawTime(screen.w - 29, 0)
 
 	-- Draw a horizontal line seperating the header
 	lcd.drawLine(0, 7, screen.w - 1, 7, SOLID, FORCE)
@@ -302,38 +303,36 @@ local function run(event)
 	-- Draw voltage battery graphic in left size
 	drawVoltageImage(3, screen.h / 2 - 22)
 
-	-- Draw our mode centered above sexy quad
-	drawModeTitle()
+	-- Draw fly mode centered above sexy quad
+	drawModeTitle(screen.w / 2, 9)
 
-	-- Draw our sexy quadcopter animated (if armed) from scratch in center
+	-- Draw sexy quadcopter animated (if armed) in center
 	drawQuadcopter(screen.w / 2 - 17,  screen.h / 2 - 15)
 
-	-- Draw Voltage at bottom middle
+	-- Draw batt voltage at bottom middle
 	drawVoltageText(screen.w / 2 - 21, screen.h - 14)
 
-	-- Draw signal strength at right top
+	-- Draw rx signal strength at right top
 	drawLink(screen.w - 44, 9)
 
-	-- Draw our flight timer at right bottom
+	-- Draw flight timer at right bottom
 	drawFlightTimer(screen.w - 44, screen.h - 30)
 
 	return 0
 end
 
-local function init_func()
-	local modeldata = model.getInfo()
+local function init()
+	-- Model name from the radio
+	modelName = model.getInfo()['name']
 
-	-- The model name from the handset
-	modelName = (modeldata and modeldata['name'] or "Unknown")
-
-	-- Read battery max-min range from radio settings
+	-- Radio battery max-min range
 	transmitter = getGeneralSettings()
 
 	-- Screen size for positioning
 	screen = {w = LCD_W, h = LCD_H}
 
-	-- For our timer tracking
+	-- Timer tracking
 	timerMax = 0
 end
 
-return { run = run, init = init_func }
+return { init = init, run = run }
