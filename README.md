@@ -2,7 +2,7 @@
 
 A simple lua-based dashboard for the OpenTX Monochrome LCD Transmitters
 
-![opentx-quad-telemetry](https://i.postimg.cc/nzbBKPz6/opentx-quad-telemetry.png)
+![opentx-quad-telemetry](https://i.postimg.cc/0N1gW2Fx/opentx-quad-telemetry.png)
 
 ## Features
 
@@ -17,6 +17,7 @@ A simple lua-based dashboard for the OpenTX Monochrome LCD Transmitters
 - Works with bigger screens *(Tango2, X9D)*
 - Shows avarage battery cells voltage
 - Crossfire telemetry support
+- Displays GPS positioning
 
 ## Author
 
@@ -36,7 +37,7 @@ A simple lua-based dashboard for the OpenTX Monochrome LCD Transmitters
 1. Put the script file to appropriate folder.
 1. Unplug the USB cable and power cycle your transmitter.
 
-#### Manual method *(varies, based on the model of your transmitter)*
+#### Manual method
 
 1. Power off your transmitter.
 1. Remove the SD card and plug it into a computer
@@ -46,7 +47,7 @@ A simple lua-based dashboard for the OpenTX Monochrome LCD Transmitters
 
 If you copied the files correctly, you can now follow next step and **set up the script as telemetry page**.
 
-## Adding the script as a telemetry page
+## Setting telemetry page
 
 These instructions are for the **X-Lite**, so please be aware the steps may vary slightly for your device.
 
@@ -58,4 +59,8 @@ These instructions are for the **X-Lite**, so please be aware the steps may vary
 1. Select one of the listed telemetry scripts and press <kbd>ENTER</kbd>.
 1. Long-press <kbd>EXIT</kbd> to return to your model screen.
 
-To **invoke the script**, simply long-press the <kbd>PAGE</kbd> button from the **model screen**.
+## Usage
+
+To **invoke the script**, simply long-press the <kbd>PAGE</kbd> button or shortly press <kbd>TELE</kbd> from the **model screen**.
+
+Shortly press <kbd>EXIT</kbd> or <kbd>RTN</kbd> to display **GPS positioning** section *(if telemetry source exists on your radio)*.

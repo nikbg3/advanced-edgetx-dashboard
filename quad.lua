@@ -13,7 +13,7 @@ local settings = {
 	arm = {switch = 'sd', target = 100},
 	mode = {switch = 'sb', list = {'Acro', 'Angle', 'Horizon'}},
 	voltage = {battery = 'VFAS', radio = 'tx-voltage'},
-	telemetry = {countdown = 'timer1'}
+	telemetry = {countdown = 'timer1', satsource = 'Sats'}
 }
 
 ------- DRAW FUNCTIONS -------
@@ -252,6 +252,45 @@ local function drawFlightTimer(x, y)
 	end
 end
 
+-- Current GPS position and sat count
+local function drawPosition(x, y)
+	local data = getValue('GPS')
+	local sats = tonumber(getValue(settings.telemetry.satsource))
+
+	-- Draw main border
+	lcd.drawRectangle(x, y, 44, 10)
+	lcd.drawRectangle(x, y + 9, 44, 20, SOLID)
+
+	-- Check if GPS data coming
+	if type(data) == "table" then
+		pos = data
+	elseif pos.lat ~= 0 then
+		pos.lost = true
+	end
+
+	-- Draw caption and GPS coordinates
+	lcd.drawText(x + 2, y + 2, "GPS", SMLSIZE)
+	lcd.drawText(x + 4, y + 12, string.sub(string.format("%09.6f", pos.lat), 0, 8), SMLSIZE)
+	lcd.drawText(x + 4, y + 20, string.sub(string.format("%09.6f", pos.lon), 0, 8), SMLSIZE)
+
+	-- Blink if telemetry is lost
+	if pos.lost then
+		if math.ceil(tick) ~= 1 then
+			lcd.drawFilledRectangle(x + 1, y + 10, 42, 18)
+		end
+	elseif getFieldInfo(settings.telemetry.satsource) then
+		-- Draw sats count if telemetry source exists
+		lcd.drawText(x + 26 + (sats >= 10 and 0 or 5), y + 2, sats, SMLSIZE + (sats >= 3 and 0 or BLINK))
+
+		-- Show satellite icon
+		lcd.drawLine(x + 40, y + 6, x + 37, y + 3, SOLID, FORCE)
+		lcd.drawLine(x + 40, y + 2, x + 36, y + 6, SOLID, FORCE)
+		lcd.drawLine(x + 40, y + 3, x + 37, y + 6, SOLID, FORCE)
+		lcd.drawLine(x + 40, y + 4, x + 38, y + 6, SOLID, FORCE)
+		lcd.drawLine(x + 39, y + 7, x + 41, y + 7, SOLID, FORCE)
+	end
+end
+
 ------- MAIN FUNCTIONS -------
 
 local function gatherInput(event)
@@ -273,12 +312,20 @@ local function gatherInput(event)
 	-- Current fly mode source 
 	mode = getValue(crsf and "FM" or settings.mode.switch)
 
+	-- Check if GPS telemetry exists
+	gps = getFieldInfo("GPS")
+
 	-- Get seconds left in model timer
 	timerLeft = getValue(settings.telemetry.countdown)
 	timerMax = (timerLeft > timerMax) and timerLeft or timerMax
 	
 	-- Animation helper
 	tick = math.fmod(getTime() / 100, 2)
+
+	-- Change screen if EXIT button pressed
+	if gps and event == EVT_EXIT_BREAK then
+		screen.alt = not screen.alt
+	end
 end
 
 local function run(event)
@@ -315,8 +362,9 @@ local function run(event)
 	-- Draw rx signal strength at right top
 	drawLink(screen.w - 44, 9)
 
-	-- Draw flight timer at right bottom
-	drawFlightTimer(screen.w - 44, screen.h - 30)
+	-- Draw flight timer or GPS position at right bottom
+	drawData = (gps and screen.alt) and drawPosition or drawFlightTimer
+	drawData(screen.w - 44, screen.h - 30)
 
 	return 0
 end
@@ -330,6 +378,9 @@ local function init()
 
 	-- Screen size for positioning
 	screen = {w = LCD_W, h = LCD_H}
+
+	-- Store GPS coordinates
+	pos = {lat = 0, lon = 0}
 
 	-- Timer tracking
 	timerMax = 0
