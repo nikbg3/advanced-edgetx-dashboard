@@ -111,16 +111,16 @@ end
 local function drawModeTitle(x, y)
 	if crsf then
 		local fm = {
-			['!FS!'] = 'Failsafe', ['!ERR'] = 'Error', ['STAB'] = 'Angle',
-			['MANU'] = 'Manual', ['HOR'] = 'Horizon', ['RTH'] = 'Return'
+			['0'] = '---', ['!FS!'] = 'Failsafe', ['!ERR'] = 'Error',
+			['STAB'] = 'Angle', ['MANU'] = 'Manual', ['HOR'] = 'Horizon', ['RTH'] = 'Return'
 		}
 
 		-- Make some prep to show good mode name
 		modeText = string.gsub(mode, "%*", "")
-		modeText = fm[string.sub(modeText, 1, 4)] or modeText
+		modeText = fm[string.sub(modeText, 1, 4)] or string.sub(modeText, 0, 1) .. string.lower(string.sub(modeText, 2))
 
-		-- In BF 4.0+ flight mode ends with '*' when not armed
-		isArmed = string.sub(mode, -1) ~= "*"
+		-- In BF 4.0+ flight mode ends with '*' when not armed, also check for errors
+		isArmed = string.sub(mode, -1) ~= "*" and not string.match('!ERR WAIT 0', mode)
 	else
 		-- Search mode in settings array and show it according to switch position
 		modeText = settings.mode.list[(mode + 1024) / 20.48 / 50 + 1] or "Unknown"
