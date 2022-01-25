@@ -215,8 +215,8 @@ local function drawLink(x, y)
 			end
 		end
 
-		-- Fill the bar (vertiсally or diagonally)
-		for i = 2, link + 2, 2 do
+		-- Fill the bar (vertiсally or diagonally), scale to 50-100 on crsf
+		for i = 2, (crsf and math.max(link * 2 - 100, 0) or link) + 2, 2 do
 			lcd.drawLine(x + 1 + i / 2.5, y + (crsf and 10 or 20 - i / 10), x + 1 + i / 2.5, y + 22, SOLID, FORCE)
 		end
 
