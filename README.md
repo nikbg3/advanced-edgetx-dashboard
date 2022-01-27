@@ -63,4 +63,4 @@ These instructions are for the **X-Lite**, so please be aware the steps may vary
 
 To **invoke the script**, simply long-press the <kbd>PAGE</kbd> button or shortly press <kbd>TELE</kbd> from the **model screen**.
 
-Shortly press <kbd>EXIT</kbd> or <kbd>RTN</kbd> to display **GPS positioning** section *(if telemetry source exists on your radio)*.
+Shortly press <kbd>EXIT</kbd> or <kbd>RTN</kbd> to display **Transmitter output** info *(for crossfire)* and **GPS positioning** section *(if telemetry source exists)*.

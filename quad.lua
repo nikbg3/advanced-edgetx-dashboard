@@ -236,6 +236,34 @@ local function drawLink(x, y)
 	end
 end
 
+-- Transmitter output power and frequency
+local function drawOutput(x, y)
+	local fmd = ({[0] = '4', '50', '150'})[getValue('RFMD')] or "--"
+	local pwr = tostring(getValue('TPWR'))
+
+	-- Draw main border
+	lcd.drawRectangle(x, y, 44, 10)
+	lcd.drawRectangle(x, y + 9, 44, 15, SOLID)
+
+	-- Draw caption and blanks
+	lcd.drawText(x + 2, y + 2, "Output", SMLSIZE)
+	lcd.drawText(x + 7, y + 16, "mw", SMLSIZE)
+	lcd.drawText(x + 28, y + 16, "hz", SMLSIZE)
+
+	-- Draw output values
+	lcd.drawText(x + 13 - math.ceil(#pwr * 2.5), y + 11, pwr, SMLSIZE)
+	lcd.drawText(x + 34 - math.ceil(#fmd * 3), y + 11, fmd, SMLSIZE)
+
+	-- Draw icon
+	lcd.drawLine(x + 35, y + 6, x + 35, y + 7, SOLID, FORCE)
+	lcd.drawLine(x + 37, y + 5, x + 37, y + 7, SOLID, FORCE)
+	lcd.drawLine(x + 39, y + 4, x + 39, y + 7, SOLID, FORCE)
+	lcd.drawLine(x + 41, y + 3, x + 41, y + 7, SOLID, FORCE)
+
+	-- Small touch to fix overlaping "hz"
+	lcd.drawPoint(x + 28, y + 17, SOLID, FORCE)
+end
+
 -- Flight timer counts from black to white
 local function drawFlightTimer(x, y)
 	local timerName = settings.telemetry.timer - 1
@@ -330,7 +358,7 @@ local function gatherInput(event)
 	tick = math.fmod(getTime() / 100, 2)
 
 	-- Change screen if EXIT button pressed
-	if gps and event == EVT_EXIT_BREAK then
+	if event == EVT_EXIT_BREAK then
 		screen.alt = not screen.alt
 	end
 end
@@ -366,8 +394,9 @@ local function run(event)
 	-- Draw batt voltage at bottom middle
 	drawVoltageText(screen.w / 2 - 21, screen.h - 14)
 
-	-- Draw rx signal strength at right top
-	drawLink(screen.w - 44, 9)
+	-- Draw rx signal strength or transmitter output at right top
+	drawData = (crsf and screen.alt) and drawOutput or drawLink
+	drawData(screen.w - 44, 9)
 
 	-- Draw flight timer or GPS position at right bottom
 	drawData = (gps and screen.alt) and drawPosition or drawFlightTimer
