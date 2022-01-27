@@ -13,7 +13,7 @@ local settings = {
 	arm = {switch = 'sd', target = 100},
 	mode = {switch = 'sb', list = {'Acro', 'Angle', 'Horizon'}},
 	voltage = {battery = 'VFAS', radio = 'tx-voltage'},
-	telemetry = {countdown = 'timer1', satsource = 'Sats'}
+	telemetry = {satsource = 'Sats', timer = 1}
 }
 
 ------- DRAW FUNCTIONS -------
@@ -238,6 +238,17 @@ end
 
 -- Flight timer counts from black to white
 local function drawFlightTimer(x, y)
+	local timerName = settings.telemetry.timer - 1
+
+	-- Follow ARM state if timer is not configured
+	if model.getTimer(timerName).mode <= 1  then
+		model.setTimer(timerName, {mode = (isArmed and 1 or 0)})
+	end
+
+	-- Get seconds left in model timer
+	timerLeft = model.getTimer(timerName).value
+	timerMax = (timerLeft > timerMax) and timerLeft or timerMax
+
 	-- Draw main border
 	lcd.drawRectangle(x, y, 44, 10)
 	lcd.drawRectangle(x, y + 9, 44, 20, SOLID)
@@ -314,10 +325,6 @@ local function gatherInput(event)
 
 	-- Check if GPS telemetry exists
 	gps = getFieldInfo("GPS")
-
-	-- Get seconds left in model timer
-	timerLeft = getValue(settings.telemetry.countdown)
-	timerMax = (timerLeft > timerMax) and timerLeft or timerMax
 	
 	-- Animation helper
 	tick = math.fmod(getTime() / 100, 2)
