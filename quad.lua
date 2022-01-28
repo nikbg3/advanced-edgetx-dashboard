@@ -386,21 +386,21 @@ local function run(event)
 	drawVoltageImage(3, screen.h / 2 - 22)
 
 	-- Draw fly mode centered above sexy quad
-	drawModeTitle(screen.w / 2, 9)
+	drawModeTitle(screen.w / 2, screen.h / 4 - 7)
 
 	-- Draw sexy quadcopter animated (if armed) in center
-	drawQuadcopter(screen.w / 2 - 17,  screen.h / 2 - 15)
+	drawQuadcopter(screen.w / 2 - 17,  screen.h / 2 - 14)
 
 	-- Draw batt voltage at bottom middle
-	drawVoltageText(screen.w / 2 - 21, screen.h - 14)
+	drawVoltageText(screen.w / 2 - 21, screen.h - (screen.h - 8) / 4 + 1)
 
 	-- Draw rx signal strength or transmitter output at right top
 	drawData = (crsf and screen.alt) and drawOutput or drawLink
-	drawData(screen.w - 44, 9)
+	drawData(screen.w - 44, (screen.h - 8) / 4 - 5)
 
 	-- Draw flight timer or GPS position at right bottom
 	drawData = (gps and screen.alt) and drawPosition or drawFlightTimer
-	drawData(screen.w - 44, screen.h - 30)
+	drawData(screen.w - 44, (screen.h - 8) / 4 * 3 - 8)
 
 	return 0
 end
