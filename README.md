@@ -2,7 +2,7 @@
 
 A simple lua-based dashboard for the OpenTX Monochrome LCD Transmitters
 
-![opentx-quad-telemetry](https://i.postimg.cc/0N1gW2Fx/opentx-quad-telemetry.png)
+![opentx-quad-telemetry](https://i.postimg.cc/NMkfcMM8/opentx-quad-telemetry.gif)
 
 ## Features
 

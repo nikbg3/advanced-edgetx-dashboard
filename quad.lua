@@ -18,7 +18,7 @@ local settings = {
 
 ------- DRAW FUNCTIONS -------
 
--- Sexy tx voltage icon with % left on battery
+-- Sexy tx voltage icon with % indication
 local function drawTransmitterVoltage(x, y)
 	-- Battery outline
 	local batteryWidth = 17
@@ -28,7 +28,7 @@ local function drawTransmitterVoltage(x, y)
 	-- Battery percentage (after battery)
 	local batteryPercent = math.ceil((txvoltage - transmitter.battMin) * 100 / (transmitter.battMax - transmitter.battMin))
 	batteryPercent = batteryPercent <= 0 and 0 or (batteryPercent > 100 and 100 or batteryPercent)
-	lcd.drawText(x + batteryWidth + 5, y, batteryPercent.."%", SMLSIZE + (batteryPercent > 20 and 0 or BLINK))
+	lcd.drawText(x + batteryWidth + 5, y, batteryPercent .. "%", SMLSIZE + (batteryPercent > 20 and 0 or BLINK))
 
 	-- Fill the battery
 	local batteryFill = math.ceil((batteryPercent / 100) * batteryWidth)
@@ -48,18 +48,17 @@ local function drawTime(x, y)
 	lcd.drawLine(x + 2, y + 3, x + 3, y + 3, SOLID, FORCE)
 	lcd.drawLine(x + 1, y + 5, x + 4, y + 5, SOLID, FORCE)
 
-	-- Time as text
+	-- Time as text, blink on tick
 	lcd.drawText(x + 08, y, string.format("%02.0f%s", timeNow.hour, math.ceil(tick) == 1 and "" or ":"), SMLSIZE)
 	lcd.drawText(x + 20, y, string.format("%02.0f", timeNow.min), SMLSIZE)
 end
 
 -- Big and sexy battery graphic with average cell voltage
 local function drawVoltageImage(x, y)
-	local batteryWidth = 12
 	local batt, cell = 0, 0
 
 	-- Try to calculate cells count from batt voltage or skip if using Cels telemetry
-	-- Don't support 5s and 7s packs - it's dangerous to detect, coz empty 8s look like an 7s!
+	-- Don't support 5s and 7s: it's dangerous to detect - empty 8s look like an 7s!
 	if (type(voltage) == "table") then
 		for i, v in ipairs(voltage) do
 			batt = batt + v
@@ -79,35 +78,35 @@ local function drawVoltageImage(x, y)
 	local voltageLow = 3.3
 
 	-- Draw battery outline
-	lcd.drawLine(x + 2, y + 1, x + batteryWidth - 2, y + 1, SOLID, 0)
-	lcd.drawLine(x, y + 2, x + batteryWidth - 1, y + 2, SOLID, 0)
+	lcd.drawLine(x + 2, y + 1, x + 10, y + 1, SOLID, 0)
+	lcd.drawLine(x, y + 2, x + 11, y + 2, SOLID, 0)
 	lcd.drawLine(x, y + 2, x, y + 50, SOLID, 0)
-	lcd.drawLine(x, y + 50, x + batteryWidth - 1, y + 50, SOLID, 0)
-	lcd.drawLine(x + batteryWidth, y + 3, x + batteryWidth, y + 49, SOLID, 0)
+	lcd.drawLine(x, y + 50, x + 11, y + 50, SOLID, 0)
+	lcd.drawLine(x + 12, y + 3, x + 12, y + 49, SOLID, 0)
 
 	-- Draw battery markers from top to bottom
-	lcd.drawLine(x + batteryWidth - math.ceil(batteryWidth / 4), y + 08, x + batteryWidth - 1, y + 08, SOLID, 0)
-	lcd.drawLine(x + batteryWidth - math.ceil(batteryWidth / 2), y + 14, x + batteryWidth - 1, y + 14, SOLID, 0)
-	lcd.drawLine(x + batteryWidth - math.ceil(batteryWidth / 4), y + 20, x + batteryWidth - 1, y + 20, SOLID, 0)
-	lcd.drawLine(x + 1, y + 26, x + batteryWidth - 1, y + 26, SOLID, 0)
-	lcd.drawLine(x + batteryWidth - math.ceil(batteryWidth / 4), y + 32, x + batteryWidth - 1, y + 32, SOLID, 0)
-	lcd.drawLine(x + batteryWidth - math.ceil(batteryWidth / 2), y + 38, x + batteryWidth - 1, y + 38, SOLID, 0)
-	lcd.drawLine(x + batteryWidth - math.ceil(batteryWidth / 4), y + 44, x + batteryWidth - 1, y + 44, SOLID, 0)
+	lcd.drawLine(x + 9, y + 08, x + 12 - 1, y + 08, SOLID, 0)
+	lcd.drawLine(x + 6, y + 14, x + 12 - 1, y + 14, SOLID, 0)
+	lcd.drawLine(x + 9, y + 20, x + 12 - 1, y + 20, SOLID, 0)
+	lcd.drawLine(x + 1, y + 26, x + 12 - 1, y + 26, SOLID, 0)
+	lcd.drawLine(x + 9, y + 32, x + 12 - 1, y + 32, SOLID, 0)
+	lcd.drawLine(x + 6, y + 38, x + 12 - 1, y + 38, SOLID, 0)
+	lcd.drawLine(x + 9, y + 44, x + 12 - 1, y + 44, SOLID, 0)
 
 	-- Place voltage text [top, middle, bottom]
-	lcd.drawText(x + batteryWidth + 4, y + 00, string.format("%.2fv", voltageHigh), SMLSIZE)
-	lcd.drawText(x + batteryWidth + 4, y + 24, string.format("%.2fv", (voltageHigh - voltageLow) / 2 + voltageLow), SMLSIZE)
-	lcd.drawText(x + batteryWidth + 4, y + 47, string.format("%.2fv", voltageLow), SMLSIZE)
+	lcd.drawText(x + 16, y + 00, string.format("%.2fv", voltageHigh), SMLSIZE)
+	lcd.drawText(x + 16, y + 24, string.format("%.2fv", (voltageHigh - voltageLow) / 2 + voltageLow), SMLSIZE)
+	lcd.drawText(x + 16, y + 47, string.format("%.2fv", voltageLow), SMLSIZE)
 
 	-- Fill the battery
 	for offset = 0, 46, 1 do
 		if ((offset * (voltageHigh - voltageLow) / 47) + voltageLow) < tonumber(batt / cell) then
-			lcd.drawLine(x + 1, y + 49 - offset, x + batteryWidth - 1, y + 49 - offset, SOLID, 0)
+			lcd.drawLine(x + 1, y + 49 - offset, x + 11, y + 49 - offset, SOLID, 0)
 		end
 	end
 end
 
--- Current flying mode (predefined)
+-- Current flying mode
 local function drawModeTitle(x, y)
 	if crsf then
 		local fm = {
@@ -138,7 +137,7 @@ local function drawPropellor(x, y, invert)
 	local animation = frame
 
 	-- Must spin opposite side if inverted
-	if invert == true then
+	if invert then
 		animation = (animation - 3) * -1 + 3
 		animation = animation - (animation > 3 and 4 or 0)
 	end
@@ -215,13 +214,13 @@ local function drawLink(x, y)
 			end
 		end
 
-		-- Fill the bar (vertiсally or diagonally), scale to 50-100 on crsf
-		for i = 2, (crsf and math.max(link * 2 - 100, 0) or link) + 2, 2 do
+		-- Fill the bar (vertiсally or diagonally), on crsf start from 50 (70 is return back value)
+		for i = 2, (crsf and math.max(link * 2 - 100 * (link >= 200 and 5 or 1), 0) or link) + 2, 2 do
 			lcd.drawLine(x + 1 + i / 2.5, y + (crsf and 10 or 20 - i / 10), x + 1 + i / 2.5, y + 22, SOLID, FORCE)
 		end
 
 		-- Last pixel filling
-		if link >= 99 then
+		if link >= (link >= 200 and 299 or 99) then
 			lcd.drawLine(x + 42, y + 10, x + 42, y + 22, SOLID, FORCE)
 		end
 
@@ -238,8 +237,9 @@ end
 
 -- Transmitter output power and frequency
 local function drawOutput(x, y)
-	local fmd = ({[0] = '4', '50', '150'})[getValue('RFMD')] or "--"
+	-- Prepare final values for display
 	local pwr = tostring(getValue('TPWR'))
+	local fmd = ({'4', '50', '150'})[getValue('RFMD') + 1] or "--"
 
 	-- Draw main border
 	lcd.drawRectangle(x, y, 44, 10)
@@ -296,16 +296,16 @@ local function drawPosition(x, y)
 	local data = getValue('GPS')
 	local sats = tonumber(getValue(settings.telemetry.satsource))
 
-	-- Draw main border
-	lcd.drawRectangle(x, y, 44, 10)
-	lcd.drawRectangle(x, y + 9, 44, 20, SOLID)
-
 	-- Check if GPS data coming
 	if type(data) == "table" then
 		pos = data
 	elseif pos.lat ~= 0 then
 		pos.lost = true
 	end
+
+	-- Draw main border
+	lcd.drawRectangle(x, y, 44, 10)
+	lcd.drawRectangle(x, y + 9, 44, 20, SOLID)
 
 	-- Draw caption and GPS coordinates
 	lcd.drawText(x + 2, y + 2, "GPS", SMLSIZE)
@@ -333,9 +333,6 @@ end
 ------- MAIN FUNCTIONS -------
 
 local function gatherInput(event)
-	-- Detect if model has crossfire telemetry
-	crsf = getFieldInfo("TQly") and getFieldInfo("RxBt")
-
 	-- Get RX signal strength source
 	link = crsf and getValue("TQly") or getRSSI()
 
@@ -345,7 +342,7 @@ local function gatherInput(event)
 	-- Get quad battery voltage source
 	voltage = getValue(crsf and "RxBt" or settings.voltage.battery)
 
-	-- Arm switch source
+	-- ARM switch source
 	armed = getValue(settings.arm.switch)
 
 	-- Current fly mode source 
@@ -370,7 +367,7 @@ local function run(event)
 	-- Begin drawing
 	lcd.clear()
 
-	-- Draw sexy voltage in upper left courner
+	-- Draw tx voltage in upper left courner
 	drawTransmitterVoltage(0, 0)
 
 	-- Draw model name centered at the upper top of the screen
@@ -382,13 +379,13 @@ local function run(event)
 	-- Draw a horizontal line seperating the header
 	lcd.drawLine(0, 7, screen.w - 1, 7, SOLID, FORCE)
 
-	-- Draw voltage battery graphic in left size
+	-- Draw voltage battery graphic in left side
 	drawVoltageImage(3, screen.h / 2 - 22)
 
 	-- Draw fly mode centered above sexy quad
 	drawModeTitle(screen.w / 2, screen.h / 4 - 7)
 
-	-- Draw sexy quadcopter animated (if armed) in center
+	-- Draw sexy quadcopter animated in center
 	drawQuadcopter(screen.w / 2 - 17,  screen.h / 2 - 14)
 
 	-- Draw batt voltage at bottom middle
@@ -406,10 +403,13 @@ local function run(event)
 end
 
 local function init()
+	-- Detect crossfire module onboard
+	crsf = crossfireTelemetryPush() ~= nil
+
 	-- Model name from the radio
 	modelName = model.getInfo()['name']
 
-	-- Radio battery max-min range
+	-- Radio battery min-max range
 	transmitter = getGeneralSettings()
 
 	-- Screen size for positioning
