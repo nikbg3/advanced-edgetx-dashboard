@@ -237,9 +237,11 @@ end
 
 -- Transmitter output power and frequency
 local function drawOutput(x, y)
+	local grid = {{'4', '50', '150'}, {'4', '25', '50', '100', '150', '200', '250', '500'}}
+
 	-- Prepare final values for display
 	local pwr = tostring(getValue('TPWR'))
-	local fmd = ({'4', '50', '150'})[getValue('RFMD') + 1] or "--"
+	local fmd = grid[elrs and 2 or 1][getValue('RFMD') + 1] or "--"
 
 	-- Draw main border
 	lcd.drawRectangle(x, y, 44, 10)
@@ -353,6 +355,21 @@ local function gatherInput(event)
 	
 	-- Animation helper
 	tick = math.fmod(getTime() / 100, 2)
+
+	-- Differentiate what exact long-range module is used
+	if crsf and elrs == nil then
+		local shift, command, data = 3, crossfireTelemetryPop()
+
+		if command == 0x29 and data[2] == 0xEE then
+			while data[shift] ~= 0 do
+				shift = shift + 1
+			end
+
+			elrs = (data[shift + 1] == 0x45 and data[shift + 2] == 0x4c and data[shift + 3] == 0x52 and data[shift + 4] == 0x53)
+		else
+			crossfireTelemetryPush(0x28, {0x00, 0xEA})
+		end
+	end
 
 	-- Change screen if EXIT button pressed
 	if event == EVT_EXIT_BREAK then

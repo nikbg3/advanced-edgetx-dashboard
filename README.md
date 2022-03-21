@@ -14,9 +14,9 @@ A simple lua-based dashboard for the OpenTX Monochrome LCD Transmitters
 
 ### Additional
 
+- Crossfire & ExpressLRS telemetry support
 - Works with bigger screens *(Tango2, X9D)*
 - Shows avarage battery cells voltage
-- Crossfire telemetry support
 - Displays GPS positioning
 
 ## Author
