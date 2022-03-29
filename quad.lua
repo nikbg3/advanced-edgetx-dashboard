@@ -268,17 +268,6 @@ end
 
 -- Flight timer counts from black to white
 local function drawFlightTimer(x, y)
-	local timerName = settings.telemetry.timer - 1
-
-	-- Follow ARM state if timer is not configured
-	if model.getTimer(timerName).mode <= 1 then
-		model.setTimer(timerName, {mode = isArmed and 1 or 0})
-	end
-
-	-- Get seconds left in model timer
-	timerLeft = model.getTimer(timerName).value
-	timerMax = timerLeft > timerMax and timerLeft or timerMax
-
 	-- Draw main border
 	lcd.drawRectangle(x, y, 44, 10)
 	lcd.drawRectangle(x, y + 9, 44, 20, SOLID)
@@ -295,19 +284,11 @@ end
 
 -- Current GPS position and sat count
 local function drawPosition(x, y)
-	local data = getValue('GPS')
 	local sats = getValue(settings.telemetry.satsource)
 
 	-- Draw main border
 	lcd.drawRectangle(x, y, 44, 10)
 	lcd.drawRectangle(x, y + 9, 44, 20, SOLID)
-
-	-- Check if GPS data coming
-	if type(data) == 'table' then
-		pos = data
-	elseif pos.lat ~= 0 then
-		pos.lost = true
-	end
 
 	-- Draw caption and GPS coordinates
 	lcd.drawText(x + 2, y + 2, 'GPS', SMLSIZE)
@@ -348,8 +329,8 @@ local function gatherInput(event)
 	-- Current fly mode source 
 	mode = getValue(crsf and 'FM' or settings.mode.switch)
 
-	-- Check if GPS telemetry exists
-	gps = getFieldInfo('GPS')
+	-- Check if GPS telemetry exists and get position
+	gps = getFieldInfo('GPS') and getValue('GPS') or false
 
 	-- Animation helper
 	tick = math.fmod(getTime() / 100, 2)
@@ -372,6 +353,26 @@ local function gatherInput(event)
 	-- Change screen if EXIT button pressed
 	if event == EVT_EXIT_BREAK then
 		screen.alt = not screen.alt
+	end
+end
+
+local function background()
+	local timerName = settings.telemetry.timer - 1
+
+	-- Follow ARM state if timer is not configured
+	if model.getTimer(timerName).mode <= 1 then
+		model.setTimer(timerName, {mode = isArmed and 1 or 0})
+	end
+
+	-- Get seconds left in model timer
+	timerLeft = model.getTimer(timerName).value
+	timerMax = timerLeft > timerMax and timerLeft or timerMax
+
+	-- Check if GPS data coming
+	if type(gps) == 'table' then
+		pos = gps
+	elseif pos.lat ~= 0 then
+		pos.lost = true
 	end
 end
 
@@ -437,4 +438,4 @@ local function init()
 	timerMax = 0
 end
 
-return { init = init, run = run }
+return { init = init, run = run, background = background }
