@@ -28,10 +28,10 @@ local function drawTransmitterVoltage(x, y)
 	-- Battery percentage (after battery)
 	local batteryPercent = math.ceil((txvoltage - transmitter.battMin) * 100 / (transmitter.battMax - transmitter.battMin))
 	batteryPercent = batteryPercent <= 0 and 0 or (batteryPercent > 100 and 100 or batteryPercent)
-	lcd.drawText(x + batteryWidth + 5, y, batteryPercent .. "%", SMLSIZE + (batteryPercent > 20 and 0 or BLINK))
+	lcd.drawText(x + batteryWidth + 5, y, batteryPercent .. '%', SMLSIZE + (batteryPercent > 20 and 0 or BLINK))
 
 	-- Fill the battery
-	local batteryFill = math.ceil((batteryPercent / 100) * batteryWidth)
+	local batteryFill = math.ceil(batteryPercent / 100 * batteryWidth)
 	lcd.drawRectangle(x, y + 1, batteryFill + 1, 4, SOLID)
 	lcd.drawRectangle(x, y + 2, batteryFill + 1, 2, SOLID)
 end
@@ -49,8 +49,8 @@ local function drawTime(x, y)
 	lcd.drawLine(x + 1, y + 5, x + 4, y + 5, SOLID, FORCE)
 
 	-- Time as text, blink on tick
-	lcd.drawText(x + 08, y, string.format("%02.0f%s", timeNow.hour, math.ceil(tick) == 1 and "" or ":"), SMLSIZE)
-	lcd.drawText(x + 20, y, string.format("%02.0f", timeNow.min), SMLSIZE)
+	lcd.drawText(x + 08, y, string.format('%02.0f%s', timeNow.hour, math.ceil(tick) == 1 and '' or ':'), SMLSIZE)
+	lcd.drawText(x + 20, y, string.format('%02.0f', timeNow.min), SMLSIZE)
 end
 
 -- Big and sexy battery graphic with average cell voltage
@@ -59,7 +59,7 @@ local function drawVoltageImage(x, y)
 
 	-- Try to calculate cells count from batt voltage or skip if using Cels telemetry
 	-- Don't support 5s and 7s: it's dangerous to detect - empty 8s look like an 7s!
-	if (type(voltage) == "table") then
+	if (type(voltage) == 'table') then
 		for i, v in ipairs(voltage) do
 			batt = batt + v
 			cell = cell + 1
@@ -74,7 +74,7 @@ local function drawVoltageImage(x, y)
 	end
 
 	-- Set mix-max battery cell value, also detect HV type
-	local voltageHigh = (batt > 4.22 * cell) and 4.35 or 4.2
+	local voltageHigh = batt > 4.22 * cell and 4.35 or 4.2
 	local voltageLow = 3.3
 
 	-- Draw battery outline
@@ -94,9 +94,9 @@ local function drawVoltageImage(x, y)
 	lcd.drawLine(x + 9, y + 44, x + 12 - 1, y + 44, SOLID, 0)
 
 	-- Place voltage text [top, middle, bottom]
-	lcd.drawText(x + 16, y + 00, string.format("%.2fv", voltageHigh), SMLSIZE)
-	lcd.drawText(x + 16, y + 24, string.format("%.2fv", (voltageHigh - voltageLow) / 2 + voltageLow), SMLSIZE)
-	lcd.drawText(x + 16, y + 47, string.format("%.2fv", voltageLow), SMLSIZE)
+	lcd.drawText(x + 16, y + 00, string.format('%.2fv', voltageHigh), SMLSIZE)
+	lcd.drawText(x + 16, y + 24, string.format('%.2fv', (voltageHigh - voltageLow) / 2 + voltageLow), SMLSIZE)
+	lcd.drawText(x + 16, y + 47, string.format('%.2fv', voltageLow), SMLSIZE)
 
 	-- Fill the battery
 	for offset = 0, 46, 1 do
@@ -115,21 +115,21 @@ local function drawModeTitle(x, y)
 		}
 
 		-- Make some prep to show good mode name
-		modeText = string.gsub(mode, "%*", "")
+		modeText = string.gsub(mode, '%*', '')
 		modeText = fm[string.sub(modeText, 1, 4)] or string.sub(modeText, 0, 1) .. string.lower(string.sub(modeText, 2))
 
 		-- In BF 4.0+ flight mode ends with '*' when not armed, also check for errors
-		isArmed = string.sub(mode, -1) ~= "*" and not string.match('!ERR WAIT 0', mode)
+		isArmed = string.sub(mode, -1) ~= '*' and not string.match('!ERR WAIT 0', mode)
 	else
 		-- Search mode in settings array and show it according to switch position
-		modeText = settings.mode.list[(mode + 1024) / 20.48 / 50 + 1] or "Unknown"
+		modeText = settings.mode.list[(mode + 1024) / 20.48 / 50 + 1] or 'Unknown'
 
 		-- Check if quad is armed by a switch
-		isArmed = ((armed + 1024) / 20.48 == settings.arm.target) and link > 0
+		isArmed = (armed + 1024) / 20.48 == settings.arm.target and link > 0
 	end
 
 	-- Set up text in top middle of the screen
-	lcd.drawText(x - math.ceil((#modeText * 5) / 2), y, modeText, SMLSIZE)
+	lcd.drawText(x - math.ceil(#modeText * 2.5), y, modeText, SMLSIZE)
 end
 
 -- Animated Quadcopter propellor (zero coords for top left)
@@ -185,12 +185,12 @@ local function drawQuadcopter(x, y)
 	drawPropellor(x, y + 20, true)
 
 	-- ARMED text
-	lcd.drawText(x + 3, y + 12, isArmed and "ARMED" or "", SMLSIZE + BLINK)
+	lcd.drawText(x + 3, y + 12, isArmed and 'ARMED' or '', SMLSIZE + BLINK)
 end
 
 -- Current quad battery volatage at the bottom
 local function drawVoltageText(x, y)
-	lcd.drawText(x + (tonumber(voltage) >= 10 and 4 or 7), y, string.format("%.2f", voltage), MIDSIZE)
+	lcd.drawText(x + (tonumber(voltage) >= 10 and 4 or 7), y, string.format('%.2f', voltage), MIDSIZE)
 	lcd.drawText(x + (tonumber(voltage) >= 10 and 35 or 31), y + 4, 'v', MEDSIZE)
 end
 
@@ -201,7 +201,7 @@ local function drawLink(x, y)
 	lcd.drawRectangle(x, y + 9, 44, 15, SOLID)
 
 	-- Draw caption and value, blink if low
-	lcd.drawText(x + 2, y + 2, (crsf and "LQ" or "RSSI") .. ":", SMLSIZE)
+	lcd.drawText(x + 2, y + 2, (crsf and 'LQ' or 'RSSI') .. ':', SMLSIZE)
 	lcd.drawText(x + (crsf and 15 or 24), y + 2, link, SMLSIZE + (link > 50 and 0 or BLINK))
 
 	if link > 0 then
@@ -241,16 +241,16 @@ local function drawOutput(x, y)
 
 	-- Prepare final values for display
 	local pwr = tostring(getValue('TPWR'))
-	local fmd = grid[elrs and 2 or 1][getValue('RFMD') + 1] or "--"
+	local fmd = grid[elrs and 2 or 1][getValue('RFMD') + 1]
 
 	-- Draw main border
 	lcd.drawRectangle(x, y, 44, 10)
 	lcd.drawRectangle(x, y + 9, 44, 15, SOLID)
 
 	-- Draw caption and blanks
-	lcd.drawText(x + 2, y + 2, "Output", SMLSIZE)
-	lcd.drawText(x + 7, y + 16, "mw", SMLSIZE)
-	lcd.drawText(x + 28, y + 16, "hz", SMLSIZE)
+	lcd.drawText(x + 2, y + 2, 'Output', SMLSIZE)
+	lcd.drawText(x + 7, y + 16, 'mw', SMLSIZE)
+	lcd.drawText(x + 28, y + 16, 'hz', SMLSIZE)
 
 	-- Draw output values
 	lcd.drawText(x + 13 - math.ceil(#pwr * 2.5), y + 11, pwr, SMLSIZE)
@@ -262,7 +262,7 @@ local function drawOutput(x, y)
 	lcd.drawLine(x + 39, y + 4, x + 39, y + 7, SOLID, FORCE)
 	lcd.drawLine(x + 41, y + 3, x + 41, y + 7, SOLID, FORCE)
 
-	-- Small touch to fix overlaping "hz"
+	-- Small touch to fix overlaping 'hz'
 	lcd.drawPoint(x + 28, y + 17, SOLID, FORCE)
 end
 
@@ -271,20 +271,20 @@ local function drawFlightTimer(x, y)
 	local timerName = settings.telemetry.timer - 1
 
 	-- Follow ARM state if timer is not configured
-	if model.getTimer(timerName).mode <= 1  then
-		model.setTimer(timerName, {mode = (isArmed and 1 or 0)})
+	if model.getTimer(timerName).mode <= 1 then
+		model.setTimer(timerName, {mode = isArmed and 1 or 0})
 	end
 
 	-- Get seconds left in model timer
 	timerLeft = model.getTimer(timerName).value
-	timerMax = (timerLeft > timerMax) and timerLeft or timerMax
+	timerMax = timerLeft > timerMax and timerLeft or timerMax
 
 	-- Draw main border
 	lcd.drawRectangle(x, y, 44, 10)
 	lcd.drawRectangle(x, y + 9, 44, 20, SOLID)
 
 	-- Draw caption and timer text
-	lcd.drawText(x + 2, y + 2, "Fly Timer", SMLSIZE)
+	lcd.drawText(x + 2, y + 2, 'Fly Timer', SMLSIZE)
 	lcd.drawTimer(x + 2, y + 11, math.abs(timerLeft), DBLSIZE + (timerLeft >= 0 and 0 or BLINK))
 
 	-- Fill the background
@@ -296,30 +296,28 @@ end
 -- Current GPS position and sat count
 local function drawPosition(x, y)
 	local data = getValue('GPS')
-	local sats = tonumber(getValue(settings.telemetry.satsource))
-
-	-- Check if GPS data coming
-	if type(data) == "table" then
-		pos = data
-	elseif pos.lat ~= 0 then
-		pos.lost = true
-	end
+	local sats = getValue(settings.telemetry.satsource)
 
 	-- Draw main border
 	lcd.drawRectangle(x, y, 44, 10)
 	lcd.drawRectangle(x, y + 9, 44, 20, SOLID)
 
+	-- Check if GPS data coming
+	if type(data) == 'table' then
+		pos = data
+	elseif pos.lat ~= 0 then
+		pos.lost = true
+	end
+
 	-- Draw caption and GPS coordinates
-	lcd.drawText(x + 2, y + 2, "GPS", SMLSIZE)
-	lcd.drawText(x + 4, y + 12, string.sub(string.format("%09.6f", pos.lat), 0, 8), SMLSIZE)
-	lcd.drawText(x + 4, y + 20, string.sub(string.format("%09.6f", pos.lon), 0, 8), SMLSIZE)
+	lcd.drawText(x + 2, y + 2, 'GPS', SMLSIZE)
+	lcd.drawText(x + 4, y + 12, string.sub(string.format('%09.6f', pos.lat), 0, 8), SMLSIZE)
+	lcd.drawText(x + 4, y + 20, string.sub(string.format('%09.6f', pos.lon), 0, 8), SMLSIZE)
 
 	-- Blink if telemetry is lost
 	if pos.lost then
-		if math.ceil(tick) ~= 1 then
-			lcd.drawFilledRectangle(x + 1, y + 10, 42, 18)
-		end
-	elseif getFieldInfo(settings.telemetry.satsource) then
+		lcd.drawFilledRectangle(x + 1, y + 10, 42, math.ceil(tick) ~= 1 and 18 or 0)
+	elseif sats ~= 0 then
 		-- Draw sats count if telemetry source exists
 		lcd.drawText(x + 26 + (sats >= 10 and 0 or 5), y + 2, sats, SMLSIZE + (sats >= 3 and 0 or BLINK))
 
@@ -336,23 +334,23 @@ end
 
 local function gatherInput(event)
 	-- Get RX signal strength source
-	link = crsf and getValue("TQly") or getRSSI()
+	link = crsf and getValue('TQly') or getRSSI()
 
 	-- Get current transmitter voltage
 	txvoltage = getValue(settings.voltage.radio)
 
 	-- Get quad battery voltage source
-	voltage = getValue(crsf and "RxBt" or settings.voltage.battery)
+	voltage = getValue(crsf and 'RxBt' or settings.voltage.battery)
 
 	-- ARM switch source
 	armed = getValue(settings.arm.switch)
 
 	-- Current fly mode source 
-	mode = getValue(crsf and "FM" or settings.mode.switch)
+	mode = getValue(crsf and 'FM' or settings.mode.switch)
 
 	-- Check if GPS telemetry exists
-	gps = getFieldInfo("GPS")
-	
+	gps = getFieldInfo('GPS')
+
 	-- Animation helper
 	tick = math.fmod(getTime() / 100, 2)
 
@@ -388,7 +386,7 @@ local function run(event)
 	drawTransmitterVoltage(0, 0)
 
 	-- Draw model name centered at the upper top of the screen
-	lcd.drawText(screen.w / 2 - math.ceil((#modelName * 5) / 2), 0, modelName, SMLSIZE)
+	lcd.drawText(screen.w / 2 - math.ceil(#modelName * 2.5), 0, modelName, SMLSIZE)
 
 	-- Draw time in top right courner
 	drawTime(screen.w - 29, 0)
