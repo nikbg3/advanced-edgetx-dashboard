@@ -1,8 +1,8 @@
 # OpenTX Quad telemetry dashboard
 
-A simple lua-based dashboard for the OpenTX Monochrome LCD Transmitters
+Advanced lua-based dashboard for the OpenTX Monochrome LCD Transmitters
 
-![opentx-quad-telemetry](https://i.postimg.cc/NMkfcMM8/opentx-quad-telemetry.gif)
+![opentx-quad-telemetry](https://i.postimg.cc/5yvVpfPR/opentx-quad-telemetry.gif)
 
 ## Features
 
@@ -49,7 +49,7 @@ If you copied the files correctly, you can now follow next step and **set up the
 
 ## Setting telemetry page
 
-These instructions are for the **X-Lite**, so please be aware the steps may vary slightly for your device.
+These instructions are for the **X9 Lite**, so please be aware the steps may vary slightly for your device.
 
 1. Hit the <kbd>MENU</kbd> button and select the model for which you would like to enable the script.
 1. While on the `MODEL SEL` screen, long-press the <kbd>PAGE</kbd> button to navigate to the `DISPLAY` page.

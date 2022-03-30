@@ -12,7 +12,7 @@
 local settings = {
 	arm = {switch = 'sd', target = 100},
 	mode = {switch = 'sb', list = {'Acro', 'Angle', 'Horizon'}},
-	voltage = {battery = 'VFAS', radio = 'tx-voltage'},
+	battery = {voltage = 'VFAS', used = 'Fuel', radio = 'tx-voltage'},
 	telemetry = {satsource = 'Sats', timer = 1}
 }
 
@@ -194,6 +194,13 @@ local function drawVoltageText(x, y)
 	lcd.drawText(x + (tonumber(voltage) >= 10 and 35 or 31), y + 4, 'v', MEDSIZE)
 end
 
+-- Current capacity drained value at the bottom
+local function drawCapacityUsed(x, y)
+	lcd.drawText(x + 14 - #tostring(mah) * 3, y, mah, MIDSIZE)
+	lcd.drawText(x + 14 + #tostring(mah) * 4, y - 1, 'm', SMLSIZE)
+	lcd.drawText(x + 14 + #tostring(mah) * 4, y + 5, 'ah', SMLSIZE)
+end
+
 -- Signal strength value and graph
 local function drawLink(x, y)
 	-- Draw main border
@@ -318,10 +325,13 @@ local function gatherInput(event)
 	link = crsf and getValue('TQly') or getRSSI()
 
 	-- Get current transmitter voltage
-	txvoltage = getValue(settings.voltage.radio)
+	txvoltage = getValue(settings.battery.radio)
 
 	-- Get quad battery voltage source
-	voltage = getValue(crsf and 'RxBt' or settings.voltage.battery)
+	voltage = getValue(crsf and 'RxBt' or settings.battery.voltage)
+
+	-- Get quad battery capacity drained value in mAh
+	capacity = getValue(crsf and 'Capa' or settings.battery.used)
 
 	-- ARM switch source
 	armed = getValue(settings.arm.switch)
@@ -368,6 +378,9 @@ local function background()
 	timerLeft = model.getTimer(timerName).value
 	timerMax = timerLeft > timerMax and timerLeft or timerMax
 
+	-- Store last capacity drained value
+	mah = link ~= 0 and capacity or mah or 0
+
 	-- Check if GPS data coming
 	if type(gps) == 'table' then
 		pos = gps
@@ -404,9 +417,6 @@ local function run(event)
 	-- Draw sexy quadcopter animated in center
 	drawQuadcopter(screen.w / 2 - 17,  screen.h / 2 - 14)
 
-	-- Draw batt voltage at bottom middle
-	drawVoltageText(screen.w / 2 - 21, screen.h - (screen.h - 8) / 4 + 1)
-
 	-- Draw rx signal strength or transmitter output at right top
 	drawData = (crsf and screen.alt) and drawOutput or drawLink
 	drawData(screen.w - 44, (screen.h - 8) / 4 - 5)
@@ -414,6 +424,10 @@ local function run(event)
 	-- Draw flight timer or GPS position at right bottom
 	drawData = (gps and screen.alt) and drawPosition or drawFlightTimer
 	drawData(screen.w - 44, (screen.h - 8) / 4 * 3 - 8)
+
+	-- Draw battery capacity drained or current voltage at bottom middle
+	drawData = (mah ~= 0 and screen.alt) and drawCapacityUsed or drawVoltageText
+	drawData(screen.w / 2 - 21, screen.h - (screen.h - 8) / 4 + 1)
 
 	return 0
 end
