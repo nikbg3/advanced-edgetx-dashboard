@@ -20,20 +20,20 @@ local settings = {
 
 -- Sexy tx voltage icon with % indication
 local function drawTransmitterVoltage(x, y)
+	local breadth = 17
+	local percent = math.min(math.max(math.ceil((txvoltage - radio.battMin) * 100 / (radio.battMax - radio.battMin)), 0), 100)
+	local filling = math.ceil(percent / 100 * breadth) + 1
+
 	-- Battery outline
-	local batteryWidth = 17
-	lcd.drawRectangle(x, y, batteryWidth + 2, 6, SOLID)
-	lcd.drawLine(x + batteryWidth + 2, y + 1, x + batteryWidth + 2, y + 4, SOLID, FORCE)
+	lcd.drawRectangle(x, y, breadth + 2, 6, SOLID)
+	lcd.drawLine(x + breadth + 2, y + 1, x + breadth + 2, y + 4, SOLID, FORCE)
 
 	-- Battery percentage (after battery)
-	local batteryPercent = math.ceil((txvoltage - transmitter.battMin) * 100 / (transmitter.battMax - transmitter.battMin))
-	batteryPercent = batteryPercent <= 0 and 0 or (batteryPercent > 100 and 100 or batteryPercent)
-	lcd.drawText(x + batteryWidth + 5, y, batteryPercent .. '%', SMLSIZE + (batteryPercent > 20 and 0 or BLINK))
+	lcd.drawText(x + breadth + 5, y, percent .. '%', SMLSIZE + (percent > 20 and 0 or BLINK))
 
 	-- Fill the battery
-	local batteryFill = math.ceil(batteryPercent / 100 * batteryWidth)
-	lcd.drawRectangle(x, y + 1, batteryFill + 1, 4, SOLID)
-	lcd.drawRectangle(x, y + 2, batteryFill + 1, 2, SOLID)
+	lcd.drawRectangle(x, y + 1, filling, 4, SOLID)
+	lcd.drawRectangle(x, y + 2, filling, 2, SOLID)
 end
 
 -- Current time with icon
@@ -129,27 +129,18 @@ local function drawModeTitle(x, y)
 	end
 
 	-- Set up text in top middle of the screen
-	lcd.drawText(x - math.ceil(#modeText * 2.5), y, modeText, SMLSIZE)
+	lcd.drawText(x - #modeText * 2.5, y, modeText, SMLSIZE)
 end
 
 -- Animated Quadcopter propellor (zero coords for top left)
 local function drawPropellor(x, y, invert)
-	local animation = frame
-
-	-- Must spin opposite side if inverted
-	if invert then
-		animation = (animation - 3) * -1 + 3
-		animation = animation - (animation > 3 and 4 or 0)
-	end
-
-	-- Prop phase accoring to step and ARM state
-	if (not isArmed and not invert) or (isArmed and animation == 0) then
+	if (not isArmed and not invert) or (isArmed and animation == (invert and 2 or 0)) then
 		lcd.drawLine(x + 1, y + 9, x + 9, y + 1, SOLID, FORCE)
 		lcd.drawLine(x + 1, y + 10, x + 8, y + 1, SOLID, FORCE)
 	elseif (isArmed and animation == 1) then
 		lcd.drawLine(x, y + 5, x + 9, y + 5, SOLID, FORCE)
 		lcd.drawLine(x, y + 4, x + 9, y + 6, SOLID, FORCE)
-	elseif (not isArmed and invert) or (isArmed and animation == 2) then
+	elseif (not isArmed and invert) or (isArmed and animation == (invert and 0 or 2)) then
 		lcd.drawLine(x + 1, y + 1, x + 9, y + 9, SOLID, FORCE)
 		lcd.drawLine(x + 1, y + 2, x + 10, y + 9, SOLID, FORCE)
 	elseif (isArmed and animation == 3) then
@@ -160,8 +151,8 @@ end
 
 -- A sexy helper to draw a 30x30 quadcopter
 local function drawQuadcopter(x, y)
-  	-- A little frame counter to help us with various animations
-	frame = math.fmod(math.ceil(tick * 8), 4)
+  	-- A little frame counter to help prop drawing
+	animation = math.fmod(math.ceil(tick * 8), 4)
 
 	-- Top left to bottom right
 	lcd.drawLine(x + 4, y + 4, x + 26, y + 26, SOLID, FORCE)
@@ -190,8 +181,8 @@ end
 
 -- Current quad battery volatage at the bottom
 local function drawVoltageText(x, y)
-	lcd.drawText(x + (tonumber(voltage) >= 10 and 4 or 7), y, string.format('%.2f', voltage), MIDSIZE)
-	lcd.drawText(x + (tonumber(voltage) >= 10 and 35 or 31), y + 4, 'v', MEDSIZE)
+	lcd.drawText(x + (voltage >= 10 and 4 or 7), y, string.format('%.2f', voltage), MIDSIZE)
+	lcd.drawText(x + (voltage >= 10 and 35 or 31), y + 4, 'v', MEDSIZE)
 end
 
 -- Current capacity drained value at the bottom
@@ -227,7 +218,7 @@ local function drawLink(x, y)
 		end
 
 		-- Last pixel filling
-		if link >= (link >= 200 and 299 or 99) then
+		if link % 200 >= 99 then
 			lcd.drawLine(x + 42, y + 10, x + 42, y + 22, SOLID, FORCE)
 		end
 
@@ -260,8 +251,8 @@ local function drawOutput(x, y)
 	lcd.drawText(x + 28, y + 16, 'hz', SMLSIZE)
 
 	-- Draw output values
-	lcd.drawText(x + 13 - math.ceil(#pwr * 2.5), y + 11, pwr, SMLSIZE)
-	lcd.drawText(x + 34 - math.ceil(#fmd * 3), y + 11, fmd, SMLSIZE)
+	lcd.drawText(x + 13 - #pwr * 2.5, y + 11, pwr, SMLSIZE)
+	lcd.drawText(x + 34 - #fmd * 3, y + 11, fmd, SMLSIZE)
 
 	-- Draw icon
 	lcd.drawLine(x + 35, y + 6, x + 35, y + 7, SOLID, FORCE)
@@ -307,7 +298,7 @@ local function drawPosition(x, y)
 		lcd.drawFilledRectangle(x + 1, y + 10, 42, math.ceil(tick) ~= 1 and 18 or 0)
 	elseif sats ~= 0 then
 		-- Draw sats count if telemetry source exists
-		lcd.drawText(x + 26 + (sats >= 10 and 0 or 5), y + 2, sats, SMLSIZE + (sats >= 3 and 0 or BLINK))
+		lcd.drawText(x + 36 - #tostring(sats) * 5, y + 2, sats, SMLSIZE + (sats >= 3 and 0 or BLINK))
 
 		-- Show satellite icon
 		lcd.drawLine(x + 40, y + 6, x + 37, y + 3, SOLID, FORCE)
@@ -336,7 +327,7 @@ local function gatherInput(event)
 	-- ARM switch source
 	armed = getValue(settings.arm.switch)
 
-	-- Current fly mode source 
+	-- Current fly mode source
 	mode = getValue(crsf and 'FM' or settings.mode.switch)
 
 	-- Check if GPS telemetry exists and get position
@@ -400,7 +391,7 @@ local function run(event)
 	drawTransmitterVoltage(0, 0)
 
 	-- Draw model name centered at the upper top of the screen
-	lcd.drawText(screen.w / 2 - math.ceil(#modelName * 2.5), 0, modelName, SMLSIZE)
+	lcd.drawText(screen.w / 2 - #modelName * 2.5, 0, modelName, SMLSIZE)
 
 	-- Draw time in top right courner
 	drawTime(screen.w - 29, 0)
@@ -428,8 +419,6 @@ local function run(event)
 	-- Draw battery capacity drained or current voltage at bottom middle
 	drawData = (mah ~= 0 and screen.alt) and drawCapacityUsed or drawVoltageText
 	drawData(screen.w / 2 - 21, screen.h - (screen.h - 8) / 4 + 1)
-
-	return 0
 end
 
 local function init()
@@ -440,7 +429,7 @@ local function init()
 	modelName = model.getInfo()['name']
 
 	-- Radio battery min-max range
-	transmitter = getGeneralSettings()
+	radio = getGeneralSettings()
 
 	-- Screen size for positioning
 	screen = {w = LCD_W, h = LCD_H}
