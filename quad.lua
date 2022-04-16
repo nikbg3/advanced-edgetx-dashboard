@@ -346,7 +346,7 @@ local function gatherInput(event)
 			end
 
 			elrs = (data[shift + 1] == 0x45 and data[shift + 2] == 0x4c and data[shift + 3] == 0x52 and data[shift + 4] == 0x53)
-		else
+		elseif math.ceil(tick) == 1 then
 			crossfireTelemetryPush(0x28, {0x00, 0xEA})
 		end
 	end
