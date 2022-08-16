@@ -13,7 +13,7 @@ local settings = {
 	arm = {switch = 'sd', target = 100},
 	mode = {switch = 'sb', list = {'Acro', 'Angle', 'Horizon'}},
 	battery = {voltage = 'VFAS', used = 'Fuel', radio = 'tx-voltage'},
-	telemetry = {satsource = 'Sats', timer = 1}
+	telemetry = {satcount = 'Sats', timer = 1}
 }
 
 ------- DRAW FUNCTIONS -------
@@ -282,7 +282,7 @@ end
 
 -- Current GPS position and sat count
 local function drawPosition(x, y)
-	local sats = getValue(settings.telemetry.satsource)
+	local sats = getValue(settings.telemetry.satcount)
 
 	-- Draw main border
 	lcd.drawRectangle(x, y, 44, 10)
@@ -367,7 +367,7 @@ local function background()
 
 	-- Get seconds left in model timer
 	timerLeft = model.getTimer(timerName).value
-	timerMax = timerLeft > timerMax and timerLeft or timerMax
+	timerMax = math.max(timerLeft, timerMax)
 
 	-- Store last capacity drained value
 	mah = link ~= 0 and capacity or mah or 0
