@@ -19,17 +19,16 @@ local settings = {
 ------- DRAW FUNCTIONS -------
 
 -- Sexy tx voltage icon with % indication
-local function drawTransmitterVoltage(x, y)
-	local breadth = 17
+local function drawTransmitterVoltage(x, y, w)
 	local percent = math.min(math.max(math.ceil((txvoltage - radio.battMin) * 100 / (radio.battMax - radio.battMin)), 0), 100)
-	local filling = math.ceil(percent / 100 * breadth) + 1
+	local filling = math.ceil(percent / 100 * (w - 1) + 0.2)
 
 	-- Battery outline
-	lcd.drawRectangle(x, y, breadth + 2, 6, SOLID)
-	lcd.drawLine(x + breadth + 2, y + 1, x + breadth + 2, y + 4, SOLID, FORCE)
+	lcd.drawRectangle(x, y, w + 1, 6, SOLID)
+	lcd.drawLine(x + w + 1, y + 1, x + w + 1, y + 4, SOLID, FORCE)
 
 	-- Battery percentage (after battery)
-	lcd.drawText(x + breadth + 5, y, percent .. '%', SMLSIZE + (percent > 20 and 0 or BLINK))
+	lcd.drawText(x + w + 4, y, percent .. '%', SMLSIZE + (percent > 20 and 0 or BLINK))
 
 	-- Fill the battery
 	lcd.drawRectangle(x, y + 1, filling, 4, SOLID)
@@ -388,7 +387,7 @@ local function run(event)
 	lcd.clear()
 
 	-- Draw tx voltage in upper left courner
-	drawTransmitterVoltage(0, 0)
+	drawTransmitterVoltage(0, 0, screen.w / 10)
 
 	-- Draw model name centered at the upper top of the screen
 	lcd.drawText(screen.w / 2 - #modelName * 2.5, 0, modelName, SMLSIZE)
