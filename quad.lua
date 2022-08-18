@@ -53,7 +53,7 @@ local function drawTime(x, y)
 end
 
 -- Big and sexy battery graphic with average cell voltage
-local function drawVoltageImage(x, y)
+local function drawVoltageImage(x, y, w)
 	local batt, cell = 0, 0
 
 	-- Try to calculate cells count from batt voltage or skip if using Cels telemetry
@@ -77,30 +77,30 @@ local function drawVoltageImage(x, y)
 	local voltageLow = 3.3
 
 	-- Draw battery outline
-	lcd.drawLine(x + 2, y + 1, x + 10, y + 1, SOLID, 0)
-	lcd.drawLine(x, y + 2, x + 11, y + 2, SOLID, 0)
+	lcd.drawLine(x + 2, y + 1, x + w - 2, y + 1, SOLID, 0)
+	lcd.drawLine(x, y + 2, x + w - 1, y + 2, SOLID, 0)
 	lcd.drawLine(x, y + 2, x, y + 50, SOLID, 0)
-	lcd.drawLine(x, y + 50, x + 11, y + 50, SOLID, 0)
-	lcd.drawLine(x + 12, y + 3, x + 12, y + 49, SOLID, 0)
+	lcd.drawLine(x, y + 50, x + w - 1, y + 50, SOLID, 0)
+	lcd.drawLine(x + w, y + 3, x + w, y + 49, SOLID, 0)
 
 	-- Draw battery markers from top to bottom
-	lcd.drawLine(x + 9, y + 08, x + 12 - 1, y + 08, SOLID, 0)
-	lcd.drawLine(x + 6, y + 14, x + 12 - 1, y + 14, SOLID, 0)
-	lcd.drawLine(x + 9, y + 20, x + 12 - 1, y + 20, SOLID, 0)
-	lcd.drawLine(x + 1, y + 26, x + 12 - 1, y + 26, SOLID, 0)
-	lcd.drawLine(x + 9, y + 32, x + 12 - 1, y + 32, SOLID, 0)
-	lcd.drawLine(x + 6, y + 38, x + 12 - 1, y + 38, SOLID, 0)
-	lcd.drawLine(x + 9, y + 44, x + 12 - 1, y + 44, SOLID, 0)
+	lcd.drawLine(x + w / 4 * 3, y + 08, x + w - 1, y + 08, SOLID, 0)
+	lcd.drawLine(x + w / 4 * 2, y + 14, x + w - 1, y + 14, SOLID, 0)
+	lcd.drawLine(x + w / 4 * 3, y + 20, x + w - 1, y + 20, SOLID, 0)
+	lcd.drawLine(x + 1, y + 26, x + w - 1, y + 26, SOLID, 0)
+	lcd.drawLine(x + w / 4 * 3, y + 32, x + w - 1, y + 32, SOLID, 0)
+	lcd.drawLine(x + w / 4 * 2, y + 38, x + w - 1, y + 38, SOLID, 0)
+	lcd.drawLine(x + w / 4 * 3, y + 44, x + w - 1, y + 44, SOLID, 0)
 
 	-- Place voltage text [top, middle, bottom]
-	lcd.drawText(x + 16, y + 00, string.format('%.2fv', voltageHigh), SMLSIZE)
-	lcd.drawText(x + 16, y + 24, string.format('%.2fv', (voltageHigh - voltageLow) / 2 + voltageLow), SMLSIZE)
-	lcd.drawText(x + 16, y + 47, string.format('%.2fv', voltageLow), SMLSIZE)
+	lcd.drawText(x + w + 4, y + 00, string.format('%.2fv', voltageHigh), SMLSIZE)
+	lcd.drawText(x + w + 4, y + 24, string.format('%.2fv', (voltageHigh - voltageLow) / 2 + voltageLow), SMLSIZE)
+	lcd.drawText(x + w + 4, y + 47, string.format('%.2fv', voltageLow), SMLSIZE)
 
 	-- Fill the battery
 	for offset = 0, 46, 1 do
 		if ((offset * (voltageHigh - voltageLow) / 47) + voltageLow) < tonumber(batt / cell) then
-			lcd.drawLine(x + 1, y + 49 - offset, x + 11, y + 49 - offset, SOLID, 0)
+			lcd.drawLine(x + 1, y + 49 - offset, x + w - 1, y + 49 - offset, SOLID, 0)
 		end
 	end
 end
@@ -399,7 +399,7 @@ local function run(event)
 	lcd.drawLine(0, 7, screen.w - 1, 7, SOLID, FORCE)
 
 	-- Draw voltage battery graphic in left side
-	drawVoltageImage(3, screen.h / 2 - 22)
+	drawVoltageImage(3, screen.h / 2 - 22, screen.w / 10)
 
 	-- Draw fly mode centered above sexy quad
 	drawModeTitle(screen.w / 2, screen.h / 4 - 7)
