@@ -1,6 +1,6 @@
-# OpenTX Quad telemetry dashboard
+# EdgeTX Quad telemetry dashboard
 
-Advanced lua-based dashboard for the OpenTX Monochrome LCD Transmitters
+Advanced lua-based dashboard for the EdgeTX Monochrome LCD Transmitters
 
 ![opentx-quad-telemetry](https://i.postimg.cc/Jz1CdwTG/opentx-quad-telemetry.gif)
 
@@ -10,25 +10,26 @@ Advanced lua-based dashboard for the OpenTX Monochrome LCD Transmitters
 * Battery voltage (graphical and numerical)
 * RX signal strength (graphical and icon)
 * Flight Timer *(perfect for whooping)*
+* Settings Menu
 * ANIMATED QUAD WHEN ARMED !
 
 ### Additional
 
-- Crossfire & ExpressLRS telemetry support
+- Crossfire,  ExpressLRS, Ghost, and FrSky telemetry support
 - Works with bigger screens *(Tango2, X9D)*
 - Shows avarage battery cells voltage
-- Displays GPS positioning
 
 ## Author
 
 * Original script by Andrew Farley - farley@neonsurge(dot)com
 * Git: https://github.com/AndrewFarley/Taranis-XLite-Q7-Lua-Dashboard
+* Modified Script by Alexey Gamov
+* Git : https://github.com/alexey-gamov/opentx-quad-telemetry
 
 ## Installing
 
-1. Download the `quad.lua` script above **(code -> download zip)**.
-1. Open `quad.lua` in notepad and edit **settings** section for you choice.
-1. Place this script into your `/SCRIPTS/TELEMETRY` folder on the radio.
+1. Download the `dash.lua`  and the `saveTable.lua` script above **(code -> download zip)**.
+1. Place **BOTH** scripts into your `/SCRIPTS/TELEMETRY` folder on the radio.
 
 #### Bootloader Method
 
@@ -63,4 +64,7 @@ These instructions are for the **X9 Lite**, so please be aware the steps may var
 
 To **invoke the script**, simply long-press the <kbd>PAGE</kbd> button or shortly press <kbd>TELE</kbd> from the **model screen**.
 
-Shortly press <kbd>EXIT</kbd> or <kbd>RTN</kbd> to display **Transmitter output** info *(for crossfire)* and **GPS positioning** section *(if telemetry source exists)*.
+Shortly press <kbd>EXIT</kbd> or <kbd>RTN</kbd> to display **Transmitter output** info *(for crossfire)* and **Mah and current**.
+
+To acces the **switch configuration**, shortly press the rotary thing. 
+To **exit** the configuration page, to cancel, shortly press <kbd>EXIT</kbd> or <kbd>RTN</kbd>.
