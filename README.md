@@ -10,6 +10,7 @@ Advanced lua-based dashboard for the EdgeTX Monochrome LCD Transmitters
 * Battery voltage (graphical and numerical)
 * RX signal strength (graphical and icon)
 * Flight Timer *(perfect for whooping)*
+* Gps
 * Settings Menu
 * ANIMATED QUAD WHEN ARMED !
 
