@@ -31,7 +31,7 @@ Advanced lua-based dashboard for the EdgeTX Monochrome LCD Transmitters
 1. Download the `dash.lua`  and the `saveTable.lua` script above **(code -> download zip)**.
 1. Place **BOTH** scripts into your `/SCRIPTS/TELEMETRY` folder on the radio.
 
-# -OR-
+#### -OR-
 
 1.Download the release .zip and extract it into your radio sd cart main folder.
 
