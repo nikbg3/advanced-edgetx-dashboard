@@ -3,16 +3,16 @@
 -- La configuración inicial esta hecha para ELRS.
 
 -- PARA CAMBIAR PAGINA, PUEDES USAR EL BOTON RTN O SIMILAR EN TU RADIO.
---local switchSettings = {
+local switchSettings = {
 	-- No Cambiar
---    arm = {switch = 'sf', target = 100, prearm = false, prearm_switch = 'sd', prearmTarget = 100},
---    mode = {
---	acro = {switch = 'sc', target = 0},
---	angle = {switch = 'sc', target = 50},
---	horizon = {switch = 'None', target = 0},
---	turtle = {switch = 'sc', target = 100}
---	},
---}
+    arm = {switch = 'sf', target = 100, prearm_switch = 'sd', prearmTarget = 100},
+    mode = {
+	acro = {switch = 'sc', target = 0},
+	angle = {switch = 'sc', target = 50},
+	horizon = {switch = 'None', target = 0},
+	turtle = {switch = 'sc', target = 100}
+	},
+}
 -- Aca ya puedes cambiar las cosas
 local otherSettings = {
 
@@ -22,7 +22,10 @@ battery = {voltage = 'VFAS', used = 'Fuel', amps_meter = 'Curr', radio = 'tx-vol
 link = {link_quality = 'RQly', rssi = 'RSSI', frsky = false},
 
 -- Acá puedes cambiar los valores de las advertencias, tx_battery_low_percent es un porcentaje.
-warnings = {rssi_warning = -95, lq_warning = 50, battery_low = 3.5, tx_battery_low_percent = 20}
+warnings = {rssi_warning = -95, lq_warning = 50, battery_low = 3.5, tx_battery_low_percent = 20},
+
+-- GPS
+satcount = 'Sats'
 }
 
 --Variables used for the rssi display
@@ -38,7 +41,6 @@ local armed = 0
 local prearmed = 0
 local isPrearmed = false
 local isArmed = false
-local is_connected = false
 local noConnectionMSG = false
 local noPrearm = false
 
@@ -86,6 +88,7 @@ local function getTelemeValues()
 		otherSettings.link.link_quality = 'RQly'
 		otherSettings.link.rssi = 'RSSI'
 		otherSettings.battery.voltage = 'RxBt'
+		otherSettings.link.frsky = false
 		ghost = true
 	end
 	if (externalModule.Type == 6 or externalModule.Type == 2) and (externalModule.subType == 1 or (internalModule.protocol == 3 or externalModule.protocol == 3)) then
@@ -103,10 +106,16 @@ local function getTelemeValues()
 		resetTelemetryProtocol()
 	end
 
-    -- Get rssi
-    --rssi = getValue(settings.link.rssi)
-	rssi = getValue("RSSI")
+    
+    -- Get RSSI
+	rssi = (D8 == true or otherSettings.link.frsky) and getRSSI() or getValue("RSSI")
 
+	-- Get satcount
+	sats = getValue(otherSettings.satcount)
+
+	-- Check if GPS telemetry exists and get position
+	gps = getFieldInfo('GPS') and getValue('GPS') or false
+	
 	-- Get RX signal strength source
 	lq = getValue(otherSettings.link.link_quality)
 
@@ -137,9 +146,6 @@ local function getTelemeValues()
 	angle = getValue(switchSettings.mode.angle.switch)
 	horizon = getValue(switchSettings.mode.horizon.switch)
 	turtle = getValue(switchSettings.mode.turtle.switch)
-
-	--Know if it is connected
-	is_connected = (lq == 0 and false or true)
 
     internalModule = model.getModule(0)
 	externalModule = model.getModule(1)
@@ -261,11 +267,13 @@ local function drawModeTitle(x, y)
 		modeText = 'Unknown'
 	end
     -- Check if quad is armed by a switch
-	if (prearmed + 1024) / 20.48 == switchSettings.arm.prearmTarget and not is_connected or switchSettings.arm.prearm_switch == 'None' then
+	if (prearmed + 1024) / 20.48 == switchSettings.arm.prearmTarget or switchSettings.arm.prearm_switch == 'None' then
 		isPrearmed = true
+	else
+		isPrearmed = false
 	end
 	
-	if (armed + 1024) / 20.48 == switchSettings.arm.target and rssi ~= 0 and isPrearmed and switchSettings.arm.switch ~= 'None' then
+	if (armed + 1024) / 20.48 == switchSettings.arm.target and rssi ~= 0 and (isPrearmed or isArmed) and switchSettings.arm.switch ~= 'None' then
 		isArmed = true
 	else
 		isArmed = false
@@ -277,11 +285,11 @@ local function drawModeTitle(x, y)
 		noConnectionMSG = false
 	end
 	
-	if (armed + 1024) / 20.48 == switchSettings.arm.target and rssi ~= 0 and prearmed == false and switchSettings.arm.prearm_switch ~= "None" then
-		noPrearm = true
-	else
-		noPrearm = false
-	end
+--	if (armed + 1024) / 20.48 == switchSettings.arm.target and rssi ~= 0 and prearmed == false and switchSettings.arm.prearm_switch ~= "None" then
+--		noPrearm = true
+--	else
+--		noPrearm = false
+--	end
     
     -- Set up text in top middle of the screen
 	lcd.drawText(x - #modeText * 2.5, y, modeText, SMLSIZE)
@@ -478,9 +486,37 @@ local function drawOutput(x, y)
 	lcd.drawLine(x + 37, y + 5, x + 37, y + 7, SOLID, FORCE)
 	lcd.drawLine(x + 39, y + 4, x + 39, y + 7, SOLID, FORCE)
 	lcd.drawLine(x + 41, y + 3, x + 41, y + 7, SOLID, FORCE)
-
-
 end
+
+-- Current GPS position and sat count
+local function drawPosition(x, y)
+	local sats = getValue(otherSettings.satcount)
+
+	-- Draw main border
+	lcd.drawRectangle(x, y, 44, 10)
+	lcd.drawRectangle(x, y + 9, 44, 20, SOLID)
+
+	-- Draw caption and GPS coordinates
+	lcd.drawText(x + 2, y + 2, 'GPS', SMLSIZE)
+	lcd.drawText(x + 4, y + 12, string.sub(string.format('%09.6f', pos.lat), 0, 8), SMLSIZE)
+	lcd.drawText(x + 4, y + 20, string.sub(string.format('%09.6f', pos.lon), 0, 8), SMLSIZE)
+
+	-- Blink if telemetry is lost
+	if pos.lost then
+		lcd.drawFilledRectangle(x + 1, y + 10, 42, math.ceil(tick) ~= 1 and 18 or 0)
+	elseif sats ~= 0 then
+		-- Draw sats count if telemetry source exists
+		lcd.drawText(x + 36 - #tostring(sats) * 5, y + 2, sats, SMLSIZE + (sats >= 3 and 0 or BLINK))
+
+		-- Show satellite icon
+		lcd.drawLine(x + 40, y + 6, x + 37, y + 3, SOLID, FORCE)
+		lcd.drawLine(x + 40, y + 2, x + 36, y + 6, SOLID, FORCE)
+		lcd.drawLine(x + 40, y + 3, x + 37, y + 6, SOLID, FORCE)
+		lcd.drawLine(x + 40, y + 4, x + 38, y + 6, SOLID, FORCE)
+		lcd.drawLine(x + 39, y + 7, x + 41, y + 7, SOLID, FORCE)
+	end
+end
+
 
 local function background()
 	local timerName = timer - 1
@@ -497,14 +533,19 @@ local function background()
     -- Store last capacity drained value
 	mah = capacity
 
+	-- Check if GPS data coming
+	if type(gps) == 'table' then
+		pos = gps
+	elseif pos.lat ~= 0 then
+		pos.lost = true
+	end
+
 	-- Track current time
 	timeNow = getDateTime()
 end
 
 local t = 0
 local i = 1
-local somethingSelected = false
-local selected = 0
 local selectedMain = 0
 local numOrSwitch
 
@@ -541,7 +582,7 @@ local function getSwitchPos(switch, oldTarget)
 	end
 
 end
-local selecSwitch = 'Nil'
+local selecSwitch = 'None'
 local editingSwitch = nil
 local function changeSwitch()
 
@@ -658,7 +699,7 @@ local function drawMenu(event)
 		selectedMain = i
 	end
 
-
+	-- Main Menu
 	if subMenu == false then
 		-- Draw title
 		lcd.drawText(screen.w / 2 - #'CONFIG' * 2.5, 2, 'CONFIG', SMLSIZE + INVERS)
@@ -782,8 +823,9 @@ local function drawMenu(event)
 			numOrSwitch = 0
 			saveSettings(switchSettings, "/SCRIPTS/TELEMETRY/savedData")
 		end
-
 	end
+
+	-- Sub Menu
 	if subMenu == true then
 		-- Draw title
 		lcd.drawText(screen.w / 2 - #'SELECT SWITCH' * 2.5, 2, 'SELECT SWITCH', SMLSIZE + INVERS)
@@ -873,13 +915,7 @@ local function drawMenu(event)
 		else
 			lcd.drawText(screen.w / 2 - #'None' * 2.5, 47, 'None', SMLSIZE)
 		end
-		
-
-
-
 	end
-
-
 end	
 
 
@@ -909,8 +945,10 @@ local function drawNormal(event)
     -- Draw flight timer, output and mah/curr
 	if screeb == 2 then
 		drawData = drawCurrAndMah
-	else
+	elseif screeb == 0 or screeb == 1 then
 		drawData = (lq ~= 0 and screeb == 1) and drawOutput or drawFlightTimer
+	else
+		drawData = drawPosition
 	end
     drawData(screen.w - 44, (screen.h - 8) / 4 * 3 - 8)
 
@@ -925,8 +963,7 @@ local function drawNormal(event)
 		else
 			screeb = screeb + 1
 		end
-		
-		if screeb == 3 then
+		if screeb == 4 then
 			screeb = 0
 		end
     end
@@ -998,6 +1035,9 @@ local function init()
 
     -- Timer tracking
 	timerMax = 0
+
+	-- Store GPS coordinates
+	pos = {lat = 0, lon = 0}
 
 	-- Get settings
 	if loadfile("/SCRIPTS/TELEMETRY/savedData") then
