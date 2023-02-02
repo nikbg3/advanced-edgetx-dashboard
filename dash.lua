@@ -17,7 +17,7 @@ local switchSettings = {
 local otherSettings = {
 
 battery = {voltage = 'VFAS', used = 'Fuel', amps_meter = 'Curr', radio = 'tx-voltage'},
-	
+
 -- Acá va el link quality y el rssi. Puedes cambiar TQly y 1RSS segun el protocolo que uses. No cambies el parametro que dice frsky.
 link = {link_quality = 'RQly', rssi = 'RSSI', frsky = false},
 
@@ -106,7 +106,6 @@ local function getTelemeValues()
 		resetTelemetryProtocol()
 	end
 
-    
     -- Get RSSI
 	rssi = (D8 == true or otherSettings.link.frsky) and getRSSI() or getValue("RSSI")
 
@@ -150,16 +149,9 @@ local function getTelemeValues()
     internalModule = model.getModule(0)
 	externalModule = model.getModule(1)
 
-
-
 	if (externalModule.Type ~= 0 and internalModule.Type == 0) or (externalModule.Type == 0 and internalModule.Type ~= 0) then
 		warningAccepted = false
 	end
-
-
-
-
-
 end
 
 
@@ -480,7 +472,6 @@ local function drawOutput(x, y)
 		lcd.drawText(x + 18, y + 11, 'No', SMLSIZE + BLINK)
 		lcd.drawText(x + 9, y + 18, 'Module', SMLSIZE + BLINK)
 	end
-
 	-- Draw icon
 	lcd.drawLine(x + 35, y + 6, x + 35, y + 7, SOLID, FORCE)
 	lcd.drawLine(x + 37, y + 5, x + 37, y + 7, SOLID, FORCE)
@@ -582,13 +573,8 @@ local function getSwitchPos(switch, oldTarget)
 	end
 
 end
+
 local selecSwitch = 'None'
-local editingSwitch = nil
-local function changeSwitch()
-
-
-end
-
 
 -- Draw Menu
 local function drawMenu(event)
@@ -598,9 +584,6 @@ local function drawMenu(event)
 
 	-- Draw title
 	lcd.drawFilledRectangle(1, 1, screen.w - 2, 9)
-
-
-
 
 	if event == EVT_ROT_RIGHT and selectedMain == 0 then
 		i = i + 1
@@ -632,11 +615,6 @@ local function drawMenu(event)
 	-- i es como la que esta "hovered"
 	-- t es la que esta subseleccionada
 	-- Parameter being selected
-
-	-- Confirm Value
-
-	--- Confirm switch --- 
-
 			
 	if selectedMain ~= 0 and event == EVT_ROT_BREAK then
 		if subMenu == false then
@@ -675,9 +653,6 @@ local function drawMenu(event)
 
 	end
 
-
-	
-
 	-- Draw switches
 	if event == EVT_ROT_BREAK and selectedMain == 0 then
 		selectedMain = i
@@ -703,6 +678,7 @@ local function drawMenu(event)
 	if subMenu == false then
 		-- Draw title
 		lcd.drawText(screen.w / 2 - #'CONFIG' * 2.5, 2, 'CONFIG', SMLSIZE + INVERS)
+
 		--ARM SWITCH
 		local armTargetValue = UpAndDown(switchSettings.arm.target)
 			lcd.drawText(2, 11, 'ARM SWITCH = ', SMLSIZE + (selectedMain ~= 1 and (i == 1 and INVERS or 0) or 0))
@@ -722,6 +698,7 @@ local function drawMenu(event)
 			numOrSwitch = 0
 			saveSettings(switchSettings, "/SCRIPTS/TELEMETRY/savedData")
 		end
+
 		-- PREARM SWITCH
 		local prearmTargetValue = UpAndDown(switchSettings.arm.prearmTarget)
 		lcd.drawText(2, 20, 'PREARM SWITCH = ', SMLSIZE + (selectedMain ~= 2 and (i == 2 and INVERS or 0) or 0))
@@ -762,7 +739,6 @@ local function drawMenu(event)
 			saveSettings(switchSettings, "/SCRIPTS/TELEMETRY/savedData")
 		end
 
-
 		-- ANGLE MODE SWITCH
 		local angleTargetValue = UpAndDown(switchSettings.mode.angle.target)
 		lcd.drawText(2, 38, 'ANGLE SWITCH = ', SMLSIZE + (selectedMain ~= 4 and (i == 4 and INVERS or 0) or 0))
@@ -782,7 +758,6 @@ local function drawMenu(event)
 			numOrSwitch = 0
 			saveSettings(switchSettings, "/SCRIPTS/TELEMETRY/savedData")
 		end
-
 
 		-- HORIZON MODE SWITCH
 		local horizonTargetValue = UpAndDown(switchSettings.mode.horizon.target)
@@ -851,7 +826,6 @@ local function drawMenu(event)
 			lcd.drawText(31, 11, 'SA', SMLSIZE)
 		end
 
-		
 		-- SB
 		if selectedSwitchNumber == 2 then
 			selecSwitch = "sb"
@@ -983,8 +957,6 @@ local function run(event)
     -- Begin drawing
     lcd.clear()
 
-
-
 	if menu == false then
 		drawScreen = drawNormal
 	end
@@ -994,9 +966,6 @@ local function run(event)
 
 	drawScreen(event)
 
-	if event == EVT_ROT_BREAK and selectedMain ~= 0 then
-		menu = true
-	end
 	if event == EVT_ROT_BREAK then
 		menu = true		
 	end
@@ -1042,7 +1011,7 @@ local function init()
 	-- Get settings
 	if loadfile("/SCRIPTS/TELEMETRY/savedData") then
 		switchSettings = loadfile("/SCRIPTS/TELEMETRY/savedData")()
-	  end
+	end
 end
 
 return { init = init, run = run, background = background }
