@@ -26,6 +26,8 @@ Advanced lua-based dashboard for the EdgeTX Monochrome LCD Transmitters
 * Git: https://github.com/AndrewFarley/Taranis-XLite-Q7-Lua-Dashboard
 * Modified Script by Alexey Gamov
 * Git : https://github.com/alexey-gamov/opentx-quad-telemetry
+* Even more modified Script (this one) by mvaldesshc
+* Git : https://github.com/mvaldesshc/advanced-edgetx-dashboard
 
 ## Installing
 
