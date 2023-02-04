@@ -578,10 +578,6 @@ local selecSwitch = 'None'
 
 -- Draw Menu
 local function drawMenu(event)
-	
-	-- Draw main rectangle
-	lcd.drawRectangle(0, 0, screen.w, screen.h, SOLID)
-
 	-- Draw title
 	lcd.drawFilledRectangle(1, 1, screen.w - 2, 9)
 
@@ -821,65 +817,65 @@ local function drawMenu(event)
 		-- SA
 		if selectedSwitchNumber == 1 then
 			selecSwitch = "sa"
-			lcd.drawText(31, 11, 'SA', SMLSIZE + INVERS)
+			lcd.drawText(screen.w / 2 - 33, 11, 'SA', SMLSIZE + INVERS)
 		else
-			lcd.drawText(31, 11, 'SA', SMLSIZE)
+			lcd.drawText(screen.w / 2 - 33, 11, 'SA', SMLSIZE)
 		end
 
 		-- SB
 		if selectedSwitchNumber == 2 then
 			selecSwitch = "sb"
-			lcd.drawText(82, 11, 'SB', SMLSIZE + INVERS)
+			lcd.drawText(screen.w / 2 + 19, 11, 'SB', SMLSIZE + INVERS)
 		else
-			lcd.drawText(82, 11, 'SB', SMLSIZE)
+			lcd.drawText(screen.w / 2 + 19, 11, 'SB', SMLSIZE)
 		end
 
 		-- SC
 		if selectedSwitchNumber == 3 then
 			selecSwitch = "sc"
-			lcd.drawText(31, 20, 'SC', SMLSIZE + INVERS + (selectedSub == 3 and 0 or BLINK))
+			lcd.drawText(screen.w / 2 - 33, 20, 'SC', SMLSIZE + INVERS + (selectedSub == 3 and 0 or BLINK))
 		else
-			lcd.drawText(31, 20, 'SC', SMLSIZE)
+			lcd.drawText(screen.w / 2 - 33, 20, 'SC', SMLSIZE)
 		end
 
 		-- SD
 		if selectedSwitchNumber == 4 then
 			selecSwitch = 'sd'
-			lcd.drawText(82, 20, 'SD', SMLSIZE + INVERS + (selectedSub == 4 and 0 or BLINK))
+			lcd.drawText(screen.w / 2 + 19, 20, 'SD', SMLSIZE + INVERS + (selectedSub == 4 and 0 or BLINK))
 		else
-			lcd.drawText(82, 20, 'SD', SMLSIZE)
+			lcd.drawText(screen.w / 2 + 19, 20, 'SD', SMLSIZE)
 		end
 
 		-- SE
 		if selectedSwitchNumber == 5 then
 			selecSwitch = 'se'
-			lcd.drawText(31, 29, 'SE', SMLSIZE + INVERS + (selectedSub == 5 and 0 or BLINK))
+			lcd.drawText(screen.w / 2 - 33, 29, 'SE', SMLSIZE + INVERS + (selectedSub == 5 and 0 or BLINK))
 		else
-			lcd.drawText(31, 29, 'SE', SMLSIZE)
+			lcd.drawText(screen.w / 2 - 33, 29, 'SE', SMLSIZE)
 		end
 
 		-- SF
 		if selectedSwitchNumber == 6 then
 			selecSwitch = 'sf'
-			lcd.drawText(82, 29, 'SF', SMLSIZE + INVERS + (selectedSub == 6 and 0 or BLINK))
+			lcd.drawText(screen.w / 2 + 19, 29, 'SF', SMLSIZE + INVERS + (selectedSub == 6 and 0 or BLINK))
 		else
-			lcd.drawText(82, 29, 'SF', SMLSIZE)
+			lcd.drawText(screen.w / 2 + 19, 29, 'SF', SMLSIZE)
 		end
 
 		-- SG
 		if selectedSwitchNumber == 7 then
 			selecSwitch = 'sg'
-			lcd.drawText(31, 38, 'SG', SMLSIZE + INVERS + (selectedSub == 7 and 0 or BLINK))
+			lcd.drawText(screen.w / 2 - 33, 38, 'SG', SMLSIZE + INVERS + (selectedSub == 7 and 0 or BLINK))
 		else
-			lcd.drawText(31, 38, 'SG', SMLSIZE)
+			lcd.drawText(screen.w / 2 - 33, 38, 'SG', SMLSIZE)
 		end
 
 		-- SH
 		if selectedSwitchNumber == 8 then
 			selecSwitch = 'sh'
-			lcd.drawText(82, 38, 'SH', SMLSIZE + INVERS + (selectedSub == 8 and 0 or BLINK))
+			lcd.drawText(screen.w / 2 + 19, 38, 'SH', SMLSIZE + INVERS + (selectedSub == 8 and 0 or BLINK))
 		else
-			lcd.drawText(82, 38, 'SH', SMLSIZE)
+			lcd.drawText(screen.w / 2 + 19, 38, 'SH', SMLSIZE)
 		end
 
 		-- None
@@ -890,6 +886,8 @@ local function drawMenu(event)
 			lcd.drawText(screen.w / 2 - #'None' * 2.5, 47, 'None', SMLSIZE)
 		end
 	end
+	-- Draw Main rectangle
+	lcd.drawRectangle(0, 0, screen.w, screen.h, SOLID)
 end	
 
 
@@ -980,7 +978,7 @@ local function run(event)
 		end
 	end
 	if internalModule.Type == 0 and externalModule.Type == 0 and warningAccepted2 == false then
-		warningAccepted2 = popupConfirmation('WARNING', 'No Module', event)
+		warningAccepted2 = popupConfirmation('No Module', event)
 		if warningAccepted2 == "CANCEL" then
 			warningAccepted2 = true
 		else
