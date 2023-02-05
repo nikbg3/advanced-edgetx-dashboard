@@ -593,10 +593,10 @@ local function drawMenu(event)
 	if event == EVT_ROT_LEFT and selectedMain ~= 0 then
 		t = t - 1
 	end
-	if t ~= nil and t < 1 then
+	if t < 1 then
 		t = 2
 	end
-	if t ~= nil and t > 2 then
+	if t > 2 then
 		t = 1
 	end
 	if i < 1 then
@@ -634,9 +634,9 @@ local function drawMenu(event)
 				switchSettings.mode.acro.switch = selecSwitch
 			elseif selectedSub == 4 then
 				switchSettings.mode.angle.switch = selecSwitch
-			elseif selectedSwitchNumber == 5 then
+			elseif selectedSub == 5 then
 				switchSettings.mode.horizon.switch = selecSwitch
-			elseif selectedSwitchNumber == 6 then
+			elseif selectedSub == 6 then
 				switchSettings.mode.turtle.switch = selecSwitch
 			end
 			subMenu = false
