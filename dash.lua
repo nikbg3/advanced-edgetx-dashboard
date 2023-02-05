@@ -1,3 +1,18 @@
+--------------------------------------------------------------------------------
+-- Original script by Andrew Farley - farley@neosurge(dot)com
+-- Git: https://github.com/AndrewFarley/Taranis-XLite-Q7-Lua-Dashboard
+--
+-- Optimization and modding by Alexey Gamov - dev@alexey-gamov(dot)ru
+-- Git: https://github.com/alexey-gamov/opentx-quad-telemetry
+-- 
+-- saveTable.lua (the script that saves the settings) by I shems (in rcgroups)
+-- Repo: https://www.rcgroups.com/forums/showthread.php?3129894-Easy-way-to-save-and-load-a-table-in-OpenTX-lua-scripts
+--
+-- Settings screen, etc, by mvaldesshc - mvaldesshc@gmail(dot)com
+-- Git: https://github.com/mvaldesshc/advanced-edgetx-dashboard
+--------------------------------------------------------------------------------
+
+
 -- Atención: La batería que esta a la derecha no va a funcionar bien si usas 5s o 7s.
 -- Acá pueden cambiar la configuración de los switches, modos de vuelo, etc.
 -- La configuración inicial esta hecha para ELRS.
