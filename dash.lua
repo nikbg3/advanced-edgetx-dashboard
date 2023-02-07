@@ -47,6 +47,8 @@ satcount = 'Sats'
 local lq = 0
 local rssi = 0
 local rssi_blink = false
+local pwr = getValue('TPWR')
+local rfmd = 'None'
 
 -- Default model name
 local modelName = 'Unknown'
@@ -88,23 +90,18 @@ end
 
 -- GET ALL NECESSARY VALUE --
 local function getTelemeValues()
-
-	crsf = false
-	ghost = false
-	if internalModule.Type == 5 or externalModule.Type == 5 then --For ELRS and CRSF
-		otherSettings.link.link_quality = 'RSSI'
+	if crsf == true then --For ELRS and CRSF 
+		otherSettings.link.link_quality = 'RQLY'
 		otherSettings.link.rssi = '1RSS'
 		otherSettings.battery.voltage = 'RxBt'
 		otherSettings.battery.used = 'Capa'
 		otherSettings.link.frsky = false
-		crsf = true
 	end
-	if externalModule.Type == 11 then --For GHOST
+	if ghost == true then --For GHOST
 		otherSettings.link.link_quality = 'RQly'
 		otherSettings.link.rssi = 'RSSI'
 		otherSettings.battery.voltage = 'RxBt'
 		otherSettings.link.frsky = false
-		ghost = true
 	end
 	if (externalModule.Type == 6 or externalModule.Type == 2) and (externalModule.subType == 1 or (internalModule.protocol == 3 or externalModule.protocol == 3)) then
 		otherSettings.link.rssi = 'RSSI'
@@ -122,17 +119,24 @@ local function getTelemeValues()
 	end
 
     -- Get RSSI
-	rssi = (D8 == true or otherSettings.link.frsky) and getRSSI() or getValue("RSSI")
-
+	rssi = (D8 == true or otherSettings.link.frsky) and getRSSI() or getValue(otherSettings.link.rssi)
+	if rssi < 0 then
+		rssiDraw = rssi + 130
+	else
+		rssiDraw = rssi
+	end
 	-- Get satcount
 	sats = getValue(otherSettings.satcount)
 
+	-- GetRMFD
+	rfmd = getValue('RMFD')
+
 	-- Check if GPS telemetry exists and get position
 	gps = getFieldInfo('GPS') and getValue('GPS') or false
-	
+
 	-- Get RX signal strength source
 	lq = getValue(otherSettings.link.link_quality)
-
+	--lq = getRSSI()
     -- Get current transmitter voltage
     txvoltage = getValue(otherSettings.battery.radio)
 
@@ -151,6 +155,9 @@ local function getTelemeValues()
 	-- ARM switch source
 	armed = getValue(switchSettings.arm.switch)
 
+	-- PWR value
+	pwr = getValue('TPWR')
+
 	-- PREARM switch source
 	prearmed = getValue(switchSettings.arm.prearm_switch)
 
@@ -166,6 +173,21 @@ local function getTelemeValues()
 
 	if (externalModule.Type ~= 0 and internalModule.Type == 0) or (externalModule.Type == 0 and internalModule.Type ~= 0) then
 		warningAccepted = false
+	end
+
+	-- Differentiate what exact long-range module is used
+	if crsf and elrs == nil then
+		local shift, command, data = 3, crossfireTelemetryPop()
+
+		if command == 0x29 and data[2] == 0xEE then
+			while data[shift] ~= 0 do
+				shift = shift + 1
+			end
+
+			elrs = (data[shift + 1] == 0x45 and data[shift + 2] == 0x4c and data[shift + 3] == 0x52 and data[shift + 4] == 0x53)
+		elseif math.ceil(tick) == 1 then
+			crossfireTelemetryPush(0x28, {0x00, 0xEA})
+		end
 	end
 end
 
@@ -270,8 +292,8 @@ local function drawModeTitle(x, y)
 		modeText = 'Horizon'
 	elseif (turtle + 1024) / 20.48 == switchSettings.mode.turtle.target and switchSettings.mode.turtle.switch ~= 'None' then
 		modeText = 'Turtle'
-	else
-		modeText = 'Unknown'
+	elseif modeText == nil then
+		modeText = 'Acro'
 	end
     -- Check if quad is armed by a switch
 	if (prearmed + 1024) / 20.48 == switchSettings.arm.prearmTarget or switchSettings.arm.prearm_switch == 'None' then
@@ -279,7 +301,7 @@ local function drawModeTitle(x, y)
 	else
 		isPrearmed = false
 	end
-	
+
 	if (armed + 1024) / 20.48 == switchSettings.arm.target and rssi ~= 0 and (isPrearmed or isArmed) and switchSettings.arm.switch ~= 'None' then
 		isArmed = true
 	else
@@ -291,13 +313,7 @@ local function drawModeTitle(x, y)
 	else
 		noConnectionMSG = false
 	end
-	
---	if (armed + 1024) / 20.48 == switchSettings.arm.target and rssi ~= 0 and prearmed == false and switchSettings.arm.prearm_switch ~= "None" then
---		noPrearm = true
---	else
---		noPrearm = false
---	end
-    
+
     -- Set up text in top middle of the screen
 	lcd.drawText(x - #modeText * 2.5, y, modeText, SMLSIZE)
 end
@@ -396,40 +412,66 @@ local function drawCurrAndMah(x, y)
 	lcd.drawText(x + 21, y + 2, current, SMLSIZE)
 end
 
+local function printLQ(x, y)
+	-- Draw lq
+	lcd.drawText(x + 2, y + 2, 'LQ' .. ':', SMLSIZE + (lq > otherSettings.warnings.lq_warning and 0 or BLINK))
+	lcd.drawText(x + 15, y + 2, tostring(lq), SMLSIZE + (lq > otherSettings.warnings.lq_warning and 0 or BLINK))
+
+	-- Draw simbol
+	if lq > 0 then
+		lcd.drawLine(x + 35, y + 3, x + 35, y + 3, SOLID, FORCE)
+		lcd.drawLine(x + 36, y + 2, x + 40, y + 2, SOLID, FORCE)
+		lcd.drawLine(x + 41, y + 3, x + 41, y + 3, SOLID, FORCE)
+		lcd.drawLine(x + 36, y + 5, x + 36, y + 5, SOLID, FORCE)
+		lcd.drawLine(x + 37, y + 4, x + 39, y + 4, SOLID, FORCE)
+		lcd.drawLine(x + 40, y + 5, x + 40, y + 5, SOLID, FORCE)
+		lcd.drawLine(x + 38, y + 7, x + 38, y + 7, SOLID, FORCE)
+	end
+end
+
 -- Draw RSSI Dbm and Lq--
 local function drawLink(x, y)
 	-- Draw top rectangle
 	lcd.drawRectangle(x, y, 44, 10, SOLID)
 
-	-- Draw lq and rssi filled rectangles for blinking:
-	-- lcd.drawFilledRectangle(x + 1, y + 10, 43, 9)
-
 	--Draw captions and values
-	if lq ~= 0 then
-		-- Draw smal bottom rectangle
+	if lq ~= 0  and not wideScreen then
+		-- Draw smol bottom rectangle
 		lcd.drawRectangle(x, y + 9, 44, 10, SOLID)
+		printLQ(x, y + 9)
 
-		-- Draw lq
-		lcd.drawText(x + 2, y + 11, 'LQ' .. ':', SMLSIZE + (lq > otherSettings.warnings.lq_warning and 0 or BLINK))
-		lcd.drawText(x + 15, y + 11, tostring(lq), SMLSIZE + (lq > otherSettings.warnings.lq_warning and 0 or BLINK))
-
-		-- Draw simbol
-		if lq > 0 then
-			lcd.drawLine(x + 35, y + 3, x + 35, y + 3, SOLID, FORCE)
-			lcd.drawLine(x + 36, y + 2, x + 40, y + 2, SOLID, FORCE)
-			lcd.drawLine(x + 41, y + 3, x + 41, y + 3, SOLID, FORCE)
-			lcd.drawLine(x + 36, y + 5, x + 36, y + 5, SOLID, FORCE)
-			lcd.drawLine(x + 37, y + 4, x + 39, y + 4, SOLID, FORCE)
-			lcd.drawLine(x + 40, y + 5, x + 40, y + 5, SOLID, FORCE)
-			lcd.drawLine(x + 38, y + 7, x + 38, y + 7, SOLID, FORCE)
-		end	
-	elseif lq == 0 then
+	else
 		-- Draw big bottom rectangle
 		lcd.drawRectangle(x, y + 9, 44, 15, SOLID)
-		if rssi > 0 then
-			for t = 2, rssi + 2, 2 do
+		if rssi > 0 or rssiDraw > 0 then
+			for t = 2, (rssi > 0 and rssi or rssiDraw) + 2, 2 do
 				lcd.drawLine(x + 1 + t / 2.5, y + (20 - t / 10), x + 1 + t / 2.5, y + 22, SOLID, FORCE)
 			end
+		end
+	end
+
+	if wideScreen then
+		-- Draw top rectangle
+		lcd.drawRectangle(x - 45, y, 44, 10, SOLID)
+		-- Draw big bottom rectangle
+		lcd.drawRectangle(x - 45, y + 9, 44, 15, SOLID)
+		-- Print LQ
+		printLQ(x - 45, y)
+		-- Draw dots
+		for i = 2, 41, 2 do
+			for j = 1, 11, 2 do
+				lcd.drawLine(x - 44 + i, y + 10 + j, x - 44 + i, y + 10 + j, SOLID, FORCE)
+			end
+		end
+
+		-- Fill the bar (vertiсally or diagonally), on crsf start from 50 (70 is return back value)
+		for i = 2, math.max(lq * 2 - 100 * (lq >= 200 and 5 or 1), 0) + 2, 2 do
+			lcd.drawLine(x - 44 + i / 2.5, y + 10, x - 44 + i / 2.5, y + 22, SOLID, FORCE)
+		end
+
+		--Last pixel filling
+		if lq % 200 >= 99 then
+			lcd.drawLine(x + 42, y + 10, x + 42, y + 22, SOLID, FORCE)
 		end
 	end
 
@@ -448,22 +490,49 @@ end
 
 -- Transmitter output power and frequency
 local function drawOutput(x, y)
-	local grid = {{'4', '50', '150'}, {'4', '25', '50', '100', '150', '200', '250', '500'}}
+	local grid = {{'4', '50', '150'}, {'4', '25', '50', '100', '150', '200', '250', '500', '1000'}}
 
-	
+
 	-- Draw main border
 	lcd.drawRectangle(x, y, 44, 10)
 
 	-- Prepare final values for display
-	local pwr = getValue('TPWR')
-	local fmd = grid[2][getValue('RFMD')]
+	local fmd = grid[elrs and 2 or 1][getValue('RFMD')]
 
 	-- Draw caption and blanks
 	lcd.drawText(x + 2, y + 2, 'Output', SMLSIZE)
 
-	if pwr ~= 0 then
-		-- Draw bottom rectangle
-		lcd.drawRectangle(x, y + 9, 44, 15, SOLID)
+	-- Draw bottom rectangle
+	lcd.drawRectangle(x, y + 9, 44, (pwr ~= 0 and 15 or 18), SOLID)
+
+	if pwr ~= 0 and not ghost then
+		-- Draw mw and hz text
+		lcd.drawText(x + 7, y + 16, 'mw', SMLSIZE)
+		lcd.drawText(x + 28, y + 16, 'hz', SMLSIZE)
+
+		-- Small touch to fix overlaping 'hz'
+		lcd.drawPoint(x + 28, y + 17, SOLID, FORCE)
+
+		-- Draw output values
+		lcd.drawText(x + 13 - #pwr * 2.5, y + 11, pwr, SMLSIZE)
+		lcd.drawText(x + 34 - #fmd * 3, y + 11, fmd, SMLSIZE)
+
+	elseif pwr == 0 then
+		-- Draw No Module
+		lcd.drawText(x + 18, y + 11, 'No', SMLSIZE + BLINK)
+		lcd.drawText(x + 12, y + 18, 'Quad', SMLSIZE + BLINK)
+	elseif ghost then
+		if rfmd == ('Race250' or 'Pure Race') then
+			fmd = '250'
+		elseif rfmd == 'Race' then
+			fmd = '166'
+		elseif rfmd == 'Normal' then
+			fmd = '55'
+		elseif rfmd == 'Long Range' then
+			fmd = '15'
+		else
+			fmd = 'Nil'
+		end
 
 		-- Draw mw and hz text
 		lcd.drawText(x + 7, y + 16, 'mw', SMLSIZE)
@@ -472,20 +541,9 @@ local function drawOutput(x, y)
 		-- Small touch to fix overlaping 'hz'
 		lcd.drawPoint(x + 28, y + 17, SOLID, FORCE)
 
-		pwr = tostring(getValue('TPWR'))
-
-		-- Draw output values
-		lcd.drawText(x + 13 - #pwr * 2.5, y + 11, pwr, SMLSIZE)
+		-- Draw Values
+		lcd.drawText(x + 13 - #tostring(pwr) * 2.5, y + 11, tostring(pwr), SMLSIZE)
 		lcd.drawText(x + 34 - #fmd * 3, y + 11, fmd, SMLSIZE)
-
-		pwr = getValue('TPWR')
-	elseif pwr == 0 then
-		-- Draw bottom rectangle
-		lcd.drawRectangle(x, y + 9, 44, 18, SOLID)
-
-		-- Draw No Module
-		lcd.drawText(x + 18, y + 11, 'No', SMLSIZE + BLINK)
-		lcd.drawText(x + 9, y + 18, 'Module', SMLSIZE + BLINK)
 	end
 	-- Draw icon
 	lcd.drawLine(x + 35, y + 6, x + 35, y + 7, SOLID, FORCE)
@@ -589,6 +647,7 @@ local function getSwitchPos(switch, oldTarget)
 
 end
 
+local isEditing = false
 local selecSwitch = 'None'
 
 -- Draw Menu
@@ -596,16 +655,16 @@ local function drawMenu(event)
 	-- Draw title
 	lcd.drawFilledRectangle(1, 1, screen.w - 2, 9)
 
-	if event == EVT_ROT_RIGHT and selectedMain == 0 then
+	if event == (EVT_ROT_RIGHT or EVT_MINUS_FIRST) and selectedMain == 0 then
 		i = i + 1
 	end
-	if event == EVT_ROT_RIGHT and selectedMain ~= 0 then
+	if event == (EVT_ROT_RIGHT or EVT_MINUS_FIRST) and selectedMain ~= 0 then
 		t = t + 1
 	end
-	if event == EVT_ROT_LEFT and selectedMain == 0 then
+	if event == (EVT_ROT_LEFT or EVT_PLUS_FIRST) and selectedMain == 0 then
 		i = i - 1
 	end
-	if event == EVT_ROT_LEFT and selectedMain ~= 0 then
+	if event == (EVT_ROT_LEFT or EVT_PLUS_FIRST) and selectedMain ~= 0 then
 		t = t - 1
 	end
 	if t < 1 then
@@ -621,13 +680,12 @@ local function drawMenu(event)
 		i = 6
 	end
 
-
 	-- selectedMain sifnifica cual de las funciones (arm, etc), esta seleccionada
 	-- i es como la que esta "hovered"
 	-- t es la que esta subseleccionada
 	-- Parameter being selected
-			
-	if selectedMain ~= 0 and event == EVT_ROT_BREAK then
+
+	if selectedMain ~= 0 and event == (EVT_ROT_BREAK or EVT_ENTER_BREAK) then
 		if subMenu == false then
 			if t == 1 then
 				subMenu = true
@@ -656,16 +714,12 @@ local function drawMenu(event)
 			end
 			subMenu = false
 			saveSettings(switchSettings, "/SCRIPTS/TELEMETRY/savedData")
-
-
 		end
-
 		menu = true
-
 	end
 
 	-- Draw switches
-	if event == EVT_ROT_BREAK and selectedMain == 0 then
+	if event == (EVT_ROT_BREAK or EVT_ENTER_BREAK) and selectedMain == 0 then
 		selectedMain = i
 		t = 1
 	end
@@ -675,7 +729,7 @@ local function drawMenu(event)
 		t = 1
 	end
 
-	if selectedMain ~= 0 and event == EVT_EXIT_BREAK then
+	if selectedMain ~= 0 and event == EVT_EXIT_BREAK and isEditing == false then
 		selectedMain = 0
 		menu = true
 		t = 1
@@ -683,6 +737,16 @@ local function drawMenu(event)
 	if subMenu == true and event == EVT_EXIT_BREAK then
 		subMenu = false
 		selectedMain = i
+	end
+
+	if isEditing and event == (EVT_ROT_BREAK or EVT_ENTER_BREAK) or event == EVT_EXIT_BREAK and selectedMain ~= 0 then
+		saveSettings(switchSettings, "/SCRIPTS/TELEMETRY/savedData")
+		numOrSwitch = 0
+		selectedMain = i
+		isEditing = false
+	end
+	if not isEditing and numOrSwitch == 1 and selectedMain ~= 0 and event == (EVT_ROT_BREAK or EVT_ENTER_BREAK) then
+		isEditing = true
 	end
 
 	-- Main Menu
@@ -700,14 +764,12 @@ local function drawMenu(event)
 			lcd.drawText(80, 11, string.upper(switchSettings.arm.switch), SMLSIZE)
 		end
 		if i == 1 and t == 2 and selectedMain == 1 then
-			lcd.drawText(105, 11, armTargetValue, SMLSIZE + (event == EVT_ROT_BREAK and 0 or INVERS))
+			lcd.drawText(105, 11, armTargetValue, SMLSIZE + INVERS + (isEditing == true and BLINK or 0))
 		else
 			lcd.drawText(105, 11, armTargetValue, SMLSIZE)
-		end	
-		if numOrSwitch == 1 and i == 1 then
+		end
+		if numOrSwitch == 1 and i == 1 and isEditing then
 			switchSettings.arm.target = getSwitchPos(switchSettings.arm.switch, switchSettings.arm.target)
-			numOrSwitch = 0
-			saveSettings(switchSettings, "/SCRIPTS/TELEMETRY/savedData")
 		end
 
 		-- PREARM SWITCH
@@ -718,16 +780,14 @@ local function drawMenu(event)
 			lcd.drawText(80, 20, string.upper(switchSettings.arm.prearm_switch), SMLSIZE + INVERS)
 		else
 			lcd.drawText(80, 20, string.upper(switchSettings.arm.prearm_switch), SMLSIZE)
-		end	
+		end
 		if i == 2 and t == 2 and selectedMain == 2 then
-			lcd.drawText(105, 20, prearmTargetValue, SMLSIZE + (event == EVT_ROT_BREAK and 0 or INVERS))
+			lcd.drawText(105, 20, prearmTargetValue, SMLSIZE + INVERS + (isEditing and BLINK or 0))
 		else
 			lcd.drawText(105, 20, prearmTargetValue, SMLSIZE)
-		end	
-		if numOrSwitch == 1 and i == 2 then
+		end
+		if numOrSwitch == 1 and i == 2 and isEditing then
 			switchSettings.arm.prearmTarget = getSwitchPos(switchSettings.arm.prearm_switch, switchSettings.arm.prearmTarget)
-			numOrSwitch = 0
-			saveSettings(switchSettings, "/SCRIPTS/TELEMETRY/savedData")
 		end
 
 		-- ACRO MODE SWITCH
@@ -738,16 +798,14 @@ local function drawMenu(event)
 			lcd.drawText(80, 29, string.upper(switchSettings.mode.acro.switch), SMLSIZE + INVERS)
 		else
 			lcd.drawText(80, 29, string.upper(switchSettings.mode.acro.switch), SMLSIZE)
-		end	
+		end
 		if i == 3 and t == 2 and selectedMain == 3 then
-			lcd.drawText(105, 29, acroTargetValue, SMLSIZE + (event == EVT_ROT_BREAK and 0 or INVERS))
+			lcd.drawText(105, 29, acroTargetValue, SMLSIZE + INVERS + (isEditing and BLINK or 0))
 		else
 			lcd.drawText(105, 29, acroTargetValue, SMLSIZE)
 		end
-		if numOrSwitch == 1 and i == 3 then
+		if numOrSwitch == 1 and i == 3 and isEditing then
 			switchSettings.mode.acro.target = getSwitchPos(switchSettings.mode.acro.switch, switchSettings.mode.acro.target)
-			numOrSwitch = 0
-			saveSettings(switchSettings, "/SCRIPTS/TELEMETRY/savedData")
 		end
 
 		-- ANGLE MODE SWITCH
@@ -758,16 +816,14 @@ local function drawMenu(event)
 			lcd.drawText(80, 38, string.upper(switchSettings.mode.angle.switch), SMLSIZE + INVERS)
 		else
 			lcd.drawText(80, 38, string.upper(switchSettings.mode.angle.switch), SMLSIZE)
-		end	
+		end
 		if i == 4 and t == 2 and selectedMain == 4 then
-			lcd.drawText(105, 38, angleTargetValue, SMLSIZE + (event == EVT_ROT_BREAK and 0 or INVERS))
+			lcd.drawText(105, 38, angleTargetValue, SMLSIZE + INVERS + (isEditing and BLINK or 0))
 		else
 			lcd.drawText(105, 38, angleTargetValue, SMLSIZE)
 		end
-		if numOrSwitch == 1 and i == 4 then
+		if numOrSwitch == 1 and i == 4 and isEditing then
 			switchSettings.mode.angle.target = getSwitchPos(switchSettings.mode.acro.switch, switchSettings.mode.angle.target)
-			numOrSwitch = 0
-			saveSettings(switchSettings, "/SCRIPTS/TELEMETRY/savedData")
 		end
 
 		-- HORIZON MODE SWITCH
@@ -778,16 +834,14 @@ local function drawMenu(event)
 			lcd.drawText(80, 47, string.upper(switchSettings.mode.horizon.switch), SMLSIZE + INVERS)
 		else
 			lcd.drawText(80, 47, string.upper(switchSettings.mode.horizon.switch), SMLSIZE)
-		end	
+		end
 		if i == 5 and t == 2 and selectedMain == 5 then
-			lcd.drawText(105, 47, horizonTargetValue, SMLSIZE + (event == EVT_ROT_BREAK and 0 or INVERS))
+			lcd.drawText(105, 47, horizonTargetValue, SMLSIZE + INVERS + (isEditing and BLINK or 0))
 		else
 			lcd.drawText(105, 47, horizonTargetValue, SMLSIZE)
-		end	
-		if numOrSwitch == 1 and i == 5 then
+		end
+		if numOrSwitch == 1 and i == 5 and isEditing then
 			switchSettings.mode.horizon.target = getSwitchPos(switchSettings.mode.horizon.switch, switchSettings.mode.horizon.target)
-			numOrSwitch = 0
-			saveSettings(switchSettings, "/SCRIPTS/TELEMETRY/savedData")
 		end
 
 		-- TURTLE MODE SWITCH
@@ -798,16 +852,14 @@ local function drawMenu(event)
 			lcd.drawText(80, 56, string.upper(switchSettings.mode.turtle.switch), SMLSIZE + INVERS)
 		else
 			lcd.drawText(80, 56, string.upper(switchSettings.mode.turtle.switch), SMLSIZE)
-		end	
-		if i == 2 and t == 2 and selectedMain == 6 then
-			lcd.drawText(105, 56, turtleTargetValue, SMLSIZE + (event == EVT_ROT_BREAK and 0 or INVERS))
+		end
+		if i == 6 and t == 2 and selectedMain == 6 then
+			lcd.drawText(105, 56, turtleTargetValue, SMLSIZE + INVERS + (isEditing and BLINK or 0))
 		else
 			lcd.drawText(105, 56, turtleTargetValue, SMLSIZE)
 		end
-		if numOrSwitch == 1 and i == 6 then
+		if numOrSwitch == 1 and i == 6 and isEditing then
 			switchSettings.mode.turtle.target = getSwitchPos(switchSettings.mode.turtle.switch, switchSettings.mode.turtle.target)
-			numOrSwitch = 0
-			saveSettings(switchSettings, "/SCRIPTS/TELEMETRY/savedData")
 		end
 	end
 
@@ -815,10 +867,10 @@ local function drawMenu(event)
 	if subMenu == true then
 		-- Draw title
 		lcd.drawText(screen.w / 2 - #'SELECT SWITCH' * 2.5, 2, 'SELECT SWITCH', SMLSIZE + INVERS)
-		if event == EVT_ROT_RIGHT then
+		if event == (EVT_ROT_RIGHT or EVT_MINUS_FIRST) then
 			selectedSwitchNumber = selectedSwitchNumber + 1
 		end
-		if event == EVT_ROT_LEFT then
+		if event == (EVT_ROT_LEFT or EVT_PLUS_FIRST) then
 			selectedSwitchNumber = selectedSwitchNumber - 1
 		end
 		if selectedSwitchNumber < 1 then
@@ -848,7 +900,7 @@ local function drawMenu(event)
 		-- SC
 		if selectedSwitchNumber == 3 then
 			selecSwitch = "sc"
-			lcd.drawText(screen.w / 2 - 33, 20, 'SC', SMLSIZE + INVERS + (selectedSub == 3 and 0 or BLINK))
+			lcd.drawText(screen.w / 2 - 33, 20, 'SC', SMLSIZE + INVERS)
 		else
 			lcd.drawText(screen.w / 2 - 33, 20, 'SC', SMLSIZE)
 		end
@@ -856,7 +908,7 @@ local function drawMenu(event)
 		-- SD
 		if selectedSwitchNumber == 4 then
 			selecSwitch = 'sd'
-			lcd.drawText(screen.w / 2 + 19, 20, 'SD', SMLSIZE + INVERS + (selectedSub == 4 and 0 or BLINK))
+			lcd.drawText(screen.w / 2 + 19, 20, 'SD', SMLSIZE + INVERS)
 		else
 			lcd.drawText(screen.w / 2 + 19, 20, 'SD', SMLSIZE)
 		end
@@ -864,7 +916,7 @@ local function drawMenu(event)
 		-- SE
 		if selectedSwitchNumber == 5 then
 			selecSwitch = 'se'
-			lcd.drawText(screen.w / 2 - 33, 29, 'SE', SMLSIZE + INVERS + (selectedSub == 5 and 0 or BLINK))
+			lcd.drawText(screen.w / 2 - 33, 29, 'SE', SMLSIZE + INVERS)
 		else
 			lcd.drawText(screen.w / 2 - 33, 29, 'SE', SMLSIZE)
 		end
@@ -872,7 +924,7 @@ local function drawMenu(event)
 		-- SF
 		if selectedSwitchNumber == 6 then
 			selecSwitch = 'sf'
-			lcd.drawText(screen.w / 2 + 19, 29, 'SF', SMLSIZE + INVERS + (selectedSub == 6 and 0 or BLINK))
+			lcd.drawText(screen.w / 2 + 19, 29, 'SF', SMLSIZE + INVERS)
 		else
 			lcd.drawText(screen.w / 2 + 19, 29, 'SF', SMLSIZE)
 		end
@@ -880,7 +932,7 @@ local function drawMenu(event)
 		-- SG
 		if selectedSwitchNumber == 7 then
 			selecSwitch = 'sg'
-			lcd.drawText(screen.w / 2 - 33, 38, 'SG', SMLSIZE + INVERS + (selectedSub == 7 and 0 or BLINK))
+			lcd.drawText(screen.w / 2 - 33, 38, 'SG', SMLSIZE + INVERS)
 		else
 			lcd.drawText(screen.w / 2 - 33, 38, 'SG', SMLSIZE)
 		end
@@ -888,7 +940,7 @@ local function drawMenu(event)
 		-- SH
 		if selectedSwitchNumber == 8 then
 			selecSwitch = 'sh'
-			lcd.drawText(screen.w / 2 + 19, 38, 'SH', SMLSIZE + INVERS + (selectedSub == 8 and 0 or BLINK))
+			lcd.drawText(screen.w / 2 + 19, 38, 'SH', SMLSIZE + INVERS)
 		else
 			lcd.drawText(screen.w / 2 + 19, 38, 'SH', SMLSIZE)
 		end
@@ -896,18 +948,18 @@ local function drawMenu(event)
 		-- None
 		if selectedSwitchNumber == 9 then
 			selecSwitch = 'None'
-			lcd.drawText(screen.w / 2 - #'None' * 2.5, 47, 'None', SMLSIZE + INVERS + (selectedSub == 9 and 0 or BLINK))
+			lcd.drawText(screen.w / 2 - #'None' * 2.5, 47, 'None', SMLSIZE + INVERS)
 		else
 			lcd.drawText(screen.w / 2 - #'None' * 2.5, 47, 'None', SMLSIZE)
 		end
 	end
 	-- Draw Main rectangle
 	lcd.drawRectangle(0, 0, screen.w, screen.h, SOLID)
-end	
+end
 
 
 local function drawNormal(event)
-	
+
     -- Draw LQ and RSSI stuff
     drawLink(screen.w - 44, (screen.h - 8) / 4 - 5)
 
@@ -924,34 +976,38 @@ local function drawNormal(event)
 	drawTime(screen.w - 29, 0)
 
     -- Draw fly mode centered above sexy quad
-	drawModeTitle(screen.w / 2, screen.h / 4 - 7)
+	drawModeTitle(screen.w / 2 - (wideScreen and 23 or 0), screen.h / 4 - 7)
 
     -- Draw sexy quadcopter animated in center
-	drawQuadcopter(screen.w / 2 - 17,  screen.h / 2 - 14)
+	drawQuadcopter(screen.w / 2 - (wideScreen and 40 or 17),  screen.h / 2 - 14)
 
     -- Draw flight timer, output and mah/curr
 	if screeb == 2 then
 		drawData = drawCurrAndMah
-	elseif screeb == 0 or screeb == 1 then
-		drawData = (lq ~= 0 and screeb == 1) and drawOutput or drawFlightTimer
+	elseif screeb == 0 then
+		drawData = drawFlightTimer
+	elseif screeb == 1 then
+		drawData = drawOutput
 	else
 		drawData = drawPosition
 	end
     drawData(screen.w - 44, (screen.h - 8) / 4 * 3 - 8)
 
     -- Draw battery capacity drained or current voltage at bottom middle
-	drawData = drawVoltageText
-	drawData(screen.w / 2 - 21, screen.h - (screen.h - 8) / 4 + 1)
+	drawVoltageText(screen.w / 2 - (wideScreen and 44 or 21), screen.h - (screen.h - 8) / 4 + 1)
 
     -- Change screen if PAGE button is pressed
     if event == EVT_EXIT_BREAK then
-		if lq == 0 and screeb == 0 then
+		if lq == 1 and screeb == 0 then
 			screeb = 2
 		else
 			screeb = screeb + 1
 		end
 		if screeb == 4 then
 			screeb = 0
+		end
+		if screeb == 1 and ghost == false and crsf == false then
+			screeb = 2
 		end
     end
 
@@ -979,10 +1035,9 @@ local function run(event)
 
 	drawScreen(event)
 
-	if event == EVT_ROT_BREAK then
-		menu = true		
+	if event == (EVT_ROT_BREAK or EVT_ENTER_BREAK) then
+		menu = true
 	end
-
 
 	if internalModule.Type ~= 0 and externalModule.Type ~= 0 and warningAccepted1 == false then
 		warningAccepted1 = popupWarning('Dual Modules', event)
@@ -1004,6 +1059,10 @@ end
 
 local function init()
 
+	crsf = crossfireTelemetryPush() ~= nil
+	ghost = true
+	--ghost = ghostTelemetryPush() ~= nil
+
 	saveSettings = loadScript("/SCRIPTS/TELEMETRY/saveTable.lua")
 
     -- Model name from the radio
@@ -1014,6 +1073,7 @@ local function init()
 
     -- Screen size for positioning
 	screen = {w = LCD_W, h = LCD_H}
+	wideScreen = screen.w == 212 and true or false
 
     -- Timer tracking
 	timerMax = 0
