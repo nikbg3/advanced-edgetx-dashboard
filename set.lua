@@ -7,36 +7,17 @@ local subSelected = 0
 local isSubMenu = false -- Determin if it is in the switch select menu
 local subMenuHovered = 1
 
-switchNameValue = {
-    'arm',
-    'prearm',
-    'acro',
-    'angle',
-    'horizon',
-    'turtle'
-}
-
-local function getSwitchPos(switch, oldTarget)
-    newTarget = getValue(switch)
-    newTarget = (newTarget + 1024) / 20.48
-    if newTarget ~= oldTarget then
-        return newTarget
-    else
-        return oldTarget
-    end
-end
+switchNameValue = { 'arm', 'prearm', 'acro', 'angle', 'horizon', 'turtle' }
 
 function writeSwitch(func) -- arreglar
-    valueToEdit1 = shared.switchSettings[switchNameValue[func]]
-    valueToEdit1.switch = names.possibleSwitches[subMenuHovered]
+    shared.switchSettings[switchNameValue[func]]['switch'] =  names.possibleSwitches[subMenuHovered]
     names.switches[selected] = names.possibleSwitches[subMenuHovered]
     loadfile("/SCRIPTS/TELEMETRY/saveTable.lua")(shared.switchSettings, "/SCRIPTS/TELEMETRY/savedData.txt")
 end
 
 function writeValue(func)
-    valueToEdit2 = shared.switchSettings[switchNameValue[func]]
-    valueToEdit2.target = (getValue(valueToEdit2.switch) + 1024) / 20.48
-    names.targets[func] = (getValue(valueToEdit2.switch) + 1024) / 20.48
+    shared.switchSettings[switchNameValue[func]]['target'] = (getValue(shared.switchSettings[switchNameValue[func]]['switch']) + 1024) / 20.48
+    names.targets[func] = (getValue(shared.switchSettings[switchNameValue[func]]['switch']) + 1024) / 20.48
     loadfile("/SCRIPTS/TELEMETRY/saveTable.lua")(shared.switchSettings, "/SCRIPTS/TELEMETRY/savedData.txt")
 end
 
@@ -54,7 +35,7 @@ function menuLogic(event)
         elseif subSelected == 2 then
             writeValue(selected)
             subSelected = 0
-            subHovered = 1
+            subHovered = 2
         end
     end
     if event == EVT_ROT_RIGHT then
@@ -78,7 +59,7 @@ function menuLogic(event)
             if hovered < 1 then
                 hovered = 1
             end
-        elseif not isSubMenu then -- for sub selection
+        elseif not isSubMenu and subSelected == 0 then-- for sub selection
             subHovered = 1
         else -- For sub menu
             subMenuHovered = subMenuHovered - 1
@@ -95,29 +76,17 @@ function menuLogic(event)
             shared.changeScreen(-1)
         elseif subSelected == 2then
             subSelected = 0
-
+        elseif isSubMenu then
+            isSubMenu = false
         end
 
     end
 end
 
-valuesIndex = {
-    [0] = 'Up',
-    [25] = 'Up-Mid',
-    [50] = 'Mid',
-    [75] = 'Mid-Dn',
-    [100] = 'Dn'
-}
+valuesIndex = { [0] = 'Up', [25] = 'Up-Mid', [50] = 'Mid', [75] = 'Mid-Dn', [100] = 'Dn' }
 
 names = {
-    names = {
-        'ARM SWITCH = ',
-        'PREARM SWITCH = ',
-        'ACRO SWITCH = ',
-        'ANGLE SWITCH =',
-        'HRZN SWITCH = ',
-        'TURTLE SWITCH ='
-    },
+    names = { 'ARM SWITCH = ', 'PREARM SWITCH = ', 'ACRO SWITCH = ', 'ANGLE SWITCH =', 'HRZN SWITCH = ', 'TURTLE SWITCH =' },
     switches = {
         shared.switchSettings.arm.switch,
         shared.switchSettings.prearm.switch,
@@ -126,17 +95,7 @@ names = {
         shared.switchSettings.horizon.switch,
         shared.switchSettings.turtle.switch
     },
-    possibleSwitches = {
-        'sa',
-        'sc',
-        'se',
-        'sg',
-        'sb',
-        'sd',
-        'sf',
-        'sh',
-        'None'
-    },
+    possibleSwitches = { 'sa', 'sc', 'se', 'sg', 'sb', 'sd', 'sf', 'sh', 'None' },
     targets = {
         shared.switchSettings.arm.target,
         shared.switchSettings.prearm.target,
@@ -156,14 +115,8 @@ function mainMenu()
     for idx, item in pairs(names.names) do
         offset = (idx + 1) * 9 - 7
         lcd.drawText(2, offset, item, SMLSIZE + ((hovered == idx and INVERS) or 0) + (((hovered == idx and selected == idx) and BLINK) or 0))
-    end
-    for idx, item in pairs(names.switches) do
-        offset = (idx + 1) * 9 - 7
-        lcd.drawText(screen.w - 48, offset, string.upper(item), SMLSIZE + ((selected == idx and subHovered == 1) and INVERS or 0))
-    end
-    for idx, value in pairs(names.targets) do
-        offset = (idx + 1) * 9 - 7
-        lcd.drawText(screen.w - 23, offset, valuesIndex[((selected == idx and subSelected == 2) and (getValue(names.switches[idx]) + 1024) / 20.48) or value], SMLSIZE + ((selected == idx and subHovered == 2) and INVERS or 0) + ((selected == idx and subSelected == 2) and BLINK or 0))
+        lcd.drawText(screen.w - 48, offset, string.upper(names.switches[idx]), SMLSIZE + ((selected == idx and subHovered == 1) and INVERS or 0))
+        lcd.drawText(screen.w - 23, offset, valuesIndex[((selected == idx and subSelected == 2) and (getValue(names.switches[idx]) + 1024) / 20.48) or names.targets[idx]], SMLSIZE + ((selected == idx and subHovered == 2) and INVERS or 0) + ((selected == idx and subSelected == 2) and BLINK or 0))
     end
 end
 

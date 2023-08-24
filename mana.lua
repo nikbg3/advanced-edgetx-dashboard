@@ -4,7 +4,7 @@
 --
 -- Optimization and modding by Alexey Gamov - dev@alexey-gamov(dot)ru
 -- Git: https://github.com/alexey-gamov/opentx-quad-telemetry
--- 
+--
 -- saveTable.lua (the script that saves the settings) by I shems (in rcgroups)
 -- Repo: https://www.rcgroups.com/forums/showthread.php?3129894-Easy-way-to-save-and-load-a-table-in-OpenTX-lua-scripts
 --
@@ -80,7 +80,6 @@ shared.otherSettings = {
 
 --Reset telemetry protocol
 local function resetTelemetryProtocol() -- Reset telemetry protocol
-    shared.otherSettings.link.link_quality = 'RQly'
     shared.otherSettings.link.rssi = 'RSSI'
     shared.otherSettings.battery.used = 'Fuel'
     shared.otherSettings.battery.voltage = 'VFAS'
@@ -89,15 +88,13 @@ end
 
 -- Get telemetry protocol parameters
 local function getTelemeParameters()
-    if crsf == true then --For ELRS and CRSF
-        shared.otherSettings.link.link_quality = 'RQLY'
+    if shared.crsf == true then --For ELRS and CRSF
         shared.otherSettings.link.rssi = '1RSS'
         shared.otherSettings.battery.voltage = 'RxBt'
         shared.otherSettings.battery.used = 'Capa'
         shared.otherSettings.link.frsky = false
     end
-    if ghost == true then --For GHOST
-        shared.otherSettings.link.link_quality = 'RQly'
+    if shared.ghost == true then --For GHOST
         shared.otherSettings.link.rssi = 'RSSI'
         shared.otherSettings.battery.voltage = 'RxBt'
         shared.otherSettings.link.frsky = false
@@ -109,11 +106,11 @@ local function getTelemeParameters()
         else
             shared.otherSettings.battery.voltage = 'A0'
         end
-        D8 = true
+        shared.D8 = true
     else
-        D8 = false
+        shared.D8 = false
     end
-    if not crsf and not ghost and not D8 then
+    if not shared.crsf and not shared.ghost and not shared.D8 then
         resetTelemetryProtocol()
     end
 end
@@ -121,6 +118,7 @@ end
 local function init()
     shared.crsf = crossfireTelemetryPush() ~= nil
     shared.ghost = ghostTelemetryPush() ~= nil
+
     shared.screenSize = {w = LCD_W, h = LCD_H}
     shared.current = 0
     shared.changeScreen(0)
@@ -138,10 +136,26 @@ local function init()
     shared.timerMax = 0
 
     shared.init()
+    getTelemeParameters()
 end
 
 local function run(event)
     shared.run(event)
+
+    -- Differentiate what exact long-range module is used
+    if shared.crsf and shared.elrs == nil then
+        local shift, command, data = 3, crossfireTelemetryPop()
+
+        if command == 0x29 and data[2] == 0xEE then
+            while data[shift] ~= 0 do
+                shift = shift + 1
+            end
+
+            shared.elrs = (data[shift + 1] == 0x45 and data[shift + 2] == 0x4c and data[shift + 3] == 0x52 and data[shift + 4] == 0x53)
+        elseif math.ceil(tick) == 1 then
+            crossfireTelemetryPush(0x28, {0x00, 0xEA})
+        end
+    end
 
     -- PREARM switch source
     prearmed = getValue(shared.switchSettings.prearm.switch)
@@ -149,18 +163,15 @@ local function run(event)
     -- ARM switch source
     armed = getValue(shared.switchSettings.arm.switch)
 
-
-
-
-    if (armed + 1024) / 20.48 == shared.switchSettings.arm.target and rssi == 0 and shared.switchSettings.arm.switch ~= 'None' then
+    if (armed + 1024) / 20.48 == shared.switchSettings.arm.target and shared.rssi == 0 and shared.switchSettings.arm.switch ~= 'None' then
         shared.noConnectionMSG = true
     else
         shared.noConnectionMSG = false
     end
 
-    if (armed + 1024) / 20.48 == shared.switchSettings.arm.target and rssi ~= 0 and (shared.isPrearmed or shared.isArmed) and shared.switchSettings.arm.switch ~= 'None' then
+    if (armed + 1024) / 20.48 == shared.switchSettings.arm.target and shared.rssi ~= 0 and (shared.isPrearmed or shared.isArmed) and shared.switchSettings.arm.switch ~= 'None' then
         shared.isArmed = true
-    elseif (armed + 1024) / 20.48 == shared.switchSettings.arm.target and rssi ~= 0 and not shared.isPrearmed then
+    elseif (armed + 1024) / 20.48 == shared.switchSettings.arm.target and shared.rssi ~= 0 and not shared.isPrearmed then
         shared.isArmed = false
         shared.noPrearm = true
     else
@@ -169,7 +180,7 @@ local function run(event)
     end
 
     -- Check if quad is armed by a switch
-    if ((prearmed + 1024) / 20.48 == shared.switchSettings.prearm.target or shared.switchSettings.prearm.switch == 'None') and not ((armed + 1024) / 20.48 == shared.switchSettigs.arm.target and not shared.isArmed)then
+    if ((prearmed + 1024) / 20.48 == shared.switchSettings.prearm.target) and not ((armed + 1024) / 20.48 == shared.switchSettigs.arm.target and not shared.isArmed) or (shared.switchSettings.prearm.switch == 'None') then
         shared.isPrearmed = true
     else
         shared.isPrearmed = false
@@ -178,17 +189,12 @@ end
 
 
 local function background()
-
-
-
     local timerName = timer - 1
 
     -- Follow ARM state if timer is not configured
     if model.getTimer(timerName).mode <= 1 then
         model.setTimer(timerName, {mode = shared.isArmed == true and 1 or 0})
     end
-
-
 
     -- Get seconds left in model timer
     shared.timerLeft = model.getTimer(timerName).value

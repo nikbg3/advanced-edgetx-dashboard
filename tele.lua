@@ -8,19 +8,17 @@ local screeb = 1 -- 1 is fly timer; 2 is for AMP and mAH; and 3 is for GPS.
 
 --Variables used for the rssi display
 local lq = 0
-local rssi = 0
-local rssi_blink = false
-local pwr = getValue('TPWR')
-local rfmd = 'None'
+local pwr = 0
+local rfmd = 0
 
 -- Get telemetry values function
 local function getTelemeValues()
     -- Get RSSI
-    rssi = (D8 == true or shared.otherSettings.link.frsky) and getRSSI() or getValue(shared.otherSettings.link.rssi)
-    if rssi < 0 then
-        rssiDraw = rssi + 130
+    shared.rssi = (shared.D8 == true or shared.otherSettings.link.frsky) and getRSSI() or getValue(shared.otherSettings.link.rssi)
+    if shared.rssi < 0 then
+        rssiDraw = shared.rssi + 130
     else
-        rssiDraw = rssi
+        rssiDraw = shared.rssi
     end
     -- Get satcount
     sats = getValue(shared.otherSettings.satcount)
@@ -51,19 +49,13 @@ local function getTelemeValues()
 
     -- PWR value
     pwr = getValue('TPWR')
+    --pwr = getValue('Tmp1')
 
     -- Get mode input
     acro = getValue(shared.switchSettings.acro.switch)
     angle = getValue(shared.switchSettings.angle.switch)
     horizon = getValue(shared.switchSettings.horizon.switch)
     turtle = getValue(shared.switchSettings.turtle.switch)
-
-    internalModule = model.getModule(0)
-    externalModule = model.getModule(1)
-
-    if (externalModule.Type ~= 0 and internalModule.Type == 0) or (externalModule.Type == 0 and internalModule.Type ~= 0) then
-        warningAccepted = false
-    end
 end
 
 -- Here are the draw functions
@@ -205,12 +197,11 @@ local function drawLink(x, y)
         -- Draw smol bottom rectangle
         lcd.drawRectangle(x, y + 9, 44, 10, SOLID)
         printLQ(x, y + 9)
-
     else
         -- Draw big bottom rectangle
         lcd.drawRectangle(x, y + 9, 44, 15, SOLID)
-        if rssi > 0 or rssiDraw > 0 then
-            for t = 2, (rssi > 0 and rssi or rssiDraw) + 2, 2 do
+        if shared.rssi > 0 or rssiDraw > 0 then
+            for t = 2, (shared.rssi > 0 and shared.rssi or rssiDraw) + 2, 2 do
                 lcd.drawLine(x + 1 + t / 2.5, y + (20 - t / 10), x + 1 + t / 2.5, y + 22, SOLID, FORCE)
             end
         end
@@ -241,15 +232,8 @@ local function drawLink(x, y)
         end
     end
 
-    lcd.drawText(x + 2, y + 2, 'RSSI' .. ':', SMLSIZE + (not rssi_blink and 0 or BLINK))
-    lcd.drawText(x + 24, y + 2, rssi, SMLSIZE + (rssi_blink and BLINK or 0))
-
-    -- RSSI BLINK LOGIC EZ
-    if rssi ==  0 or rssi < shared.otherSettings.warnings.rssi_warning then
-        rssi_blink = true
-    else
-        rssi_blink = false
-    end
+    lcd.drawText(x + 2, y + 2, 'RSSI' .. ':', SMLSIZE + ((shared.rssi == 0 or shared.rssi < shared.otherSettings.warnings.rssi_warning) and BLINK or 0))
+    lcd.drawText(x + 24, y + 2, shared.rssi, SMLSIZE + ((shared.rssi == 0 or shared.rssi < shared.otherSettings.warnings.rssi_warning) and BLINK or 0))
 end
 
 -- Current quad battery voltage at the bottom
@@ -262,17 +246,19 @@ end
 -- Draw mode name
 local function drawModeTitle(x, y)
     -- FM
-    if (acro + 1024) / 20.48 == shared.switchSettings.acro.target and shared.switchSettings.acro.switch ~= 'None' then
-        modeText = 'Acro'
+    if (turtle + 1024) / 20.48 == shared.switchSettings.turtle.target and shared.switchSettings.turtle.switch ~= 'None' then
+        modeText = 'Turtle'
     elseif (angle + 1024) / 20.48 == shared.switchSettings.angle.target and shared.switchSettings.angle.switch ~= 'None' then
         modeText = 'Angle'
     elseif (horizon + 1024) / 20.48 == shared.switchSettings.horizon.target and shared.switchSettings.horizon.switch ~= 'None' then
         modeText = 'Horizon'
-    elseif (turtle + 1024) / 20.48 == shared.switchSettings.turtle.target and shared.switchSettings.turtle.switch ~= 'None' then
-        modeText = 'Turtle'
+    elseif (acro + 1024) / 20.48 == shared.switchSettings.acro.target and shared.switchSettings.acro.switch ~= 'None' then
+        modeText = 'Acro'
     else
         modeText = 'Acro'
     end
+
+
 
     -- Set up text in top middle of the screen
     lcd.drawText(x - #modeText * 2.5, y, modeText, SMLSIZE)
@@ -356,46 +342,48 @@ local function drawPosition(x, y)
 end
 
 local function drawOutput(x, y)
-    local grid = {{'4', '50', '150'}, {'4', '25', '50', '100', '150', '200', '250', '500', '1000'}}
-
+    local grid = { {'4', '50', '150'}, {'25', '50', '100', '100hz', '150', '200', '250', '333hz', '500', 'D250', 'D500', 'F500', 'F1000'} }
 
     -- Draw main border
     lcd.drawRectangle(x, y, 44, 10)
 
     -- Prepare final values for display
-    local fmd = grid[elrs and 2 or 1][getValue('RFMD')]
+    local fmd = grid[shared.elrs and 2 or 1][getValue('RFMD')]
+    if fmd == nil then
+        fmd = 'Err'
+    end
 
     -- Draw caption and blanks
     lcd.drawText(x + 2, y + 2, 'Output', SMLSIZE)
+    full = rfmd == 4 or rfmd == 8
 
     -- Draw bottom rectangle
-    lcd.drawRectangle(x, y + 9, 44, (pwr ~= 0 and 15 or 18), SOLID)
+    lcd.drawRectangle(x, y + 9, 44, (full and 20 or 18), SOLID)
 
-    if pwr ~= 0 and not ghost then
-        -- Draw mw and hz text
-        lcd.drawText(x + 7, y + 16, 'mw', SMLSIZE)
-        lcd.drawText(x + 28, y + 16, 'hz', SMLSIZE)
+    if pwr ~= 0 and not shared.ghost then
+        mwOffset = (full or rfmd == 13) and 1 or 0
+        lcd.drawText(x + ((full and 23) or 28), y + ((full and 20) or 18), (full and 'Full') or 'hz', SMLSIZE)
+        lcd.drawText(x + 5 - mwOffset, y + 18, 'mw', SMLSIZE)
 
-        -- Small touch to fix overlaping 'hz'
+        -- Small touch to fix overlapping 'hz'
         lcd.drawPoint(x + 28, y + 17, SOLID, FORCE)
 
         -- Draw output values
-        lcd.drawText(x + 13 - #pwr * 2.5, y + 11, pwr, SMLSIZE)
-        lcd.drawText(x + 34 - #fmd * 3, y + 11, fmd, SMLSIZE)
-
+        lcd.drawText(x + 11 - mwOffset - #tostring(pwr) * 2.5, y + 11, tostring(pwr), SMLSIZE)
+        lcd.drawText(x + 34 - #fmd * 3 - mwOffset, y + 11, fmd, SMLSIZE)
     elseif pwr == 0 then
         -- Draw No Module
         lcd.drawText(x + 18, y + 11, 'No', SMLSIZE + BLINK)
         lcd.drawText(x + 12, y + 18, 'Quad', SMLSIZE + BLINK)
-    elseif ghost then
+    elseif shared.ghost then
         if rfmd == ('Race250' or 'Pure Race') then
             fmd = '250'
         elseif rfmd == 'Race' then
-            fmd = '166'
+            fmd = 'RACE'
         elseif rfmd == 'Normal' then
-            fmd = '55'
+            fmd = 'NRM'
         elseif rfmd == 'Long Range' then
-            fmd = '15'
+            fmd = 'LR'
         else
             fmd = 'Nil'
         end
@@ -439,7 +427,7 @@ function shared.run(event)
 
     -- Change screen if PAGE button is pressed
     if event == EVT_EXIT_BREAK then
-        if screeb == 2 and crsf then
+        if screeb == 2 and not shared.crsf then
             screeb = 4
         else
             screeb = screeb + 1
