@@ -15,7 +15,7 @@ Advanced lua-based dashboard for the EdgeTX Monochrome LCD Transmitters
 * Settings Menu
 * ANIMATED QUAD WHEN ARMED !
 
-# Addiotions to this FORK are the following features added by me (Nikolay Kolev):
+## Addiotions to this FORK are the following features added by me (Nikolay Kolev):
 * Battery voltage is moved next to the battery
 * Now we show full battery voltage next to the average cell voltage
 * Showing CORE temperature
