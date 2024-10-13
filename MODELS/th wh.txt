@@ -1,5 +1,4 @@
-Props spin
 Air mode
+Camera angle
 Goggles batteries
 DVR recording
-Camera recording
