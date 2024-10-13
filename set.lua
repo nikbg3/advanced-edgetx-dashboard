@@ -1,13 +1,13 @@
 -- This is the settings screen
 local shared = ...
-local hovered = 1 -- Main select (arm, prearm, etc)
+local hovered = 1 -- Main select (arm, etc)
 local selected = 0
 local subHovered = 1 -- Switch or value
 local subSelected = 0
 local isSubMenu = false -- Determin if it is in the switch select menu
 local subMenuHovered = 1
 
-switchNameValue = { 'arm', 'prearm', 'acro', 'angle', 'horizon', 'turtle' }
+switchNameValue = { 'arm', 'acro', 'angle', 'horizon', 'turtle', 'air' }
 
 function writeSwitch(func) -- arreglar
     shared.switchSettings[switchNameValue[func]]['switch'] =  names.possibleSwitches[subMenuHovered]
@@ -86,23 +86,24 @@ end
 valuesIndex = { [0] = 'Up', [25] = 'Up-Mid', [50] = 'Mid', [75] = 'Mid-Dn', [100] = 'Dn' }
 
 names = {
-    names = { 'ARM SWITCH = ', 'PREARM SWITCH = ', 'ACRO SWITCH = ', 'ANGLE SWITCH =', 'HRZN SWITCH = ', 'TURTLE SWITCH =' },
+    names = { 'ARM SWITCH = ', 'ACRO SWITCH = ', 'ANGLE SWITCH =', 'HRZN SWITCH = ', 'TURTLE SWITCH =', 'AIR SWITCH =' },
     switches = {
         shared.switchSettings.arm.switch,
-        shared.switchSettings.prearm.switch,
         shared.switchSettings.acro.switch,
         shared.switchSettings.angle.switch,
         shared.switchSettings.horizon.switch,
-        shared.switchSettings.turtle.switch
+        shared.switchSettings.turtle.switch,
+        shared.switchSettings.air.switch
     },
     possibleSwitches = { 'sa', 'sc', 'se', 'sg', 'sb', 'sd', 'sf', 'sh', 'None' },
     targets = {
         shared.switchSettings.arm.target,
-        shared.switchSettings.prearm.target,
         shared.switchSettings.acro.target,
         shared.switchSettings.angle.target,
         shared.switchSettings.horizon.target,
-        shared.switchSettings.turtle.target
+        shared.switchSettings.turtle.target,
+        shared.switchSettings.air.target
+
     },
 }
 
