@@ -4,7 +4,10 @@ local shared = ...
 txvoltage = getValue(shared.otherSettings.battery.radio)
 radio = getGeneralSettings()
 local timeNow = getDateTime()
-local screeb = 1 -- 1 is fly timer; 2 is for AMP and mAH; and 3 is for GPS.
+local screeb = 2 -- 1 is fly timer; 2 is for AMP and mAH; and 3 is for GPS.
+local hasGPS = true
+local checkListText = nil
+local isChecklistVisible = false
 
 --Variables used for the rssi display
 local lq = 0
@@ -14,7 +17,8 @@ local rfmd = 0
 -- Get telemetry values function
 local function getTelemeValues()
     -- Get RSSI
-    shared.rssi = (shared.D8 == true or shared.otherSettings.link.frsky) and getRSSI() or getValue(shared.otherSettings.link.rssi)
+    shared.rssi = (shared.D8 == true or shared.otherSettings.link.frsky) and getRSSI() or
+        getValue(shared.otherSettings.link.rssi)
     if shared.rssi < 0 then
         rssiDraw = shared.rssi + 130
     else
@@ -39,7 +43,15 @@ local function getTelemeValues()
     tick = math.fmod(getTime() / 100, 2)
 
     -- Get quad battery voltage source
-    voltage = getValue(shared.otherSettings.battery.voltage)
+    local newVoltage = getValue(shared.otherSettings.battery.voltage)
+    if (not shared.isArmed and checkListText ~= nil and (voltage == nil or voltage == 0 or voltage ~= voltage) and newVoltage > 1.0) then
+        isChecklistVisible = true
+        playFile("chl.wav")
+    end
+    voltage = newVoltage
+
+    -- Get quad temperature
+    temperature = getValue(shared.otherSettings.temp.temp1)
 
     -- Get quad battery capacity drained value in mAh
     shared.capacity = getValue(shared.otherSettings.battery.used)
@@ -56,13 +68,15 @@ local function getTelemeValues()
     angle = getValue(shared.switchSettings.angle.switch)
     horizon = getValue(shared.switchSettings.horizon.switch)
     turtle = getValue(shared.switchSettings.turtle.switch)
+    air = getValue(shared.switchSettings.air.switch)
 end
 
 -- Here are the draw functions
 
 -- Big and sexy battery graphic with average cell voltage
 local function drawVoltageImage(x, y, w)
-    local batt, cell = 0, 0
+    local cell = 0
+    local batt = 0
 
     -- Try to calculate cells count from batt voltage or skip if using Cels telemetry
     -- Don't support 5s and 7s: it's dangerous to detect - empty 8s look like an 7s!
@@ -102,7 +116,13 @@ local function drawVoltageImage(x, y, w)
 
     -- Place voltage text [top, middle, bottom]
     lcd.drawText(x + w + 4, y + 00, string.format('%.2fv', voltageHigh), SMLSIZE)
-    lcd.drawText(x + w + 4, y + 24, string.format('%.2fv', (voltageHigh - voltageLow) / 2 + voltageLow), SMLSIZE)
+
+    local cellVolt = string.format('%.2fv', batt / cell)
+    if (cellVolt ~= 'nanv') then -- NaN check
+        local fullVolt = string.format('%.2fv', batt)
+        lcd.drawText(x + w + 4, y + 19, ' ' .. cellVolt, SMLSIZE + BOLD)
+        lcd.drawText(x + w + 4, y + 29, "(" .. fullVolt .. ")", SMLSIZE + BOLD)
+    end
     lcd.drawText(x + w + 4, y + 47, string.format('%.2fv', voltageLow), SMLSIZE)
 
     -- Fill the battery
@@ -164,10 +184,6 @@ local function drawQuadcopter(x, y)
     if shared.noConnectionMSG then
         lcd.drawText(x, y + 12, 'NO QUAD', SMLSIZE + BLINK)
     end
-
-    if shared.noPrearm then
-        lcd.drawText(screen.w / 2 - #'NO PREARM' * 2.5 - 1, y + 12, 'NO PREARM', SMLSIZE + BLINK)
-    end
 end
 
 local function printLQ(x, y)
@@ -193,7 +209,7 @@ local function drawLink(x, y)
     lcd.drawRectangle(x, y, 44, 10, SOLID)
 
     --Draw captions and values
-    if lq ~= 0  and not wideScreen then
+    if lq ~= 0 and not wideScreen then
         -- Draw smol bottom rectangle
         lcd.drawRectangle(x, y + 9, 44, 10, SOLID)
         printLQ(x, y + 9)
@@ -232,14 +248,20 @@ local function drawLink(x, y)
         end
     end
 
-    lcd.drawText(x + 2, y + 2, 'RSSI' .. ':', SMLSIZE + ((shared.rssi == 0 or shared.rssi < shared.otherSettings.warnings.rssi_warning) and BLINK or 0))
-    lcd.drawText(x + 24, y + 2, shared.rssi, SMLSIZE + ((shared.rssi == 0 or shared.rssi < shared.otherSettings.warnings.rssi_warning) and BLINK or 0))
+    lcd.drawText(x + 2, y + 2, 'RSSI' .. ':',
+        SMLSIZE + ((shared.rssi == 0 or shared.rssi < shared.otherSettings.warnings.rssi_warning) and BLINK or 0))
+    lcd.drawText(x + 24, y + 2, shared.rssi,
+        SMLSIZE + ((shared.rssi == 0 or shared.rssi < shared.otherSettings.warnings.rssi_warning) and BLINK or 0))
 end
 
--- Current quad battery voltage at the bottom
-local function drawVoltageText(x, y)
-    lcd.drawText(x + (voltage >= 10 and 4 or 7), y, string.format('%.2f', voltage), MIDSIZE)
-    lcd.drawText(x + (voltage >= 10 and 35 or 31), y + 4, 'v', MEDSIZE)
+-- Current quad temperature at the bottom
+local function drawTempText(x, y)
+    if (temperature == nil) then
+        temperature = 0
+    end
+
+    lcd.drawText(x + (temperature >= 10 and 14 or 17), y, temperature, MIDSIZE)
+    lcd.drawText(x + (temperature >= 10 and 28 or 24), y, '°', MEDSIZE)
 end
 
 
@@ -252,13 +274,13 @@ local function drawModeTitle(x, y)
         modeText = 'Angle'
     elseif (horizon + 1024) / 20.48 == shared.switchSettings.horizon.target and shared.switchSettings.horizon.switch ~= 'None' then
         modeText = 'Horizon'
+    elseif (air + 1024) / 20.48 == shared.switchSettings.air.target and shared.switchSettings.air.switch ~= 'None' then
+        modeText = 'Air'
     elseif (acro + 1024) / 20.48 == shared.switchSettings.acro.target and shared.switchSettings.acro.switch ~= 'None' then
         modeText = 'Acro'
     else
         modeText = 'Acro'
     end
-
-
 
     -- Set up text in top middle of the screen
     lcd.drawText(x - #modeText * 2.5, y, modeText, SMLSIZE)
@@ -282,7 +304,8 @@ end
 
 -- Tx voltage icon with % indication
 local function drawTransmitterVoltage(x, y, w)
-    local percent = math.min(math.max(math.ceil((txvoltage - radio.battMin) * 100 / (radio.battMax - radio.battMin)), 0), 100)
+    local percent = math.min(math.max(math.ceil((txvoltage - radio.battMin) * 100 / (radio.battMax - radio.battMin)), 0),
+        100)
     local filling = math.ceil(percent / 100 * (w - 1) + 0.2)
 
     -- Battery outline
@@ -342,7 +365,7 @@ local function drawPosition(x, y)
 end
 
 local function drawOutput(x, y)
-    local grid = { {'4', '50', '150'}, {'25', '50', '100', '100hz', '150', '200', '250', '333hz', '500', 'D250', 'D500', 'F500', 'F1000'} }
+    local grid = { { '4', '50', '150' }, { '25', '50', '100', '100hz', '150', '200', '250', '333hz', '500', 'D250', 'D500', 'F500', 'F1000' } }
 
     -- Draw main border
     lcd.drawRectangle(x, y, 44, 10)
@@ -413,32 +436,65 @@ local function drawCurrAndMah(x, y)
     lcd.drawRectangle(x, y + 9, 44, 20, SOLID)
 
     -- Draw mah
-    lcd.drawText(x + 16 - #tostring(shared.mah) * 3, y + 13, shared.mah, MIDSIZE)
-    lcd.drawText(x + 16 + #tostring(shared.mah) * 4, y + 12, 'm', SMLSIZE)
-    lcd.drawText(x + 16 + #tostring(shared.mah) * 4, y + 18, 'ah', SMLSIZE)
+    local mah = shared.mah
+    if (mah == nil) then
+        mah = 0
+    end
+
+    lcd.drawText(x + 16 - #tostring(mah) * 3, y + 13, mah, MIDSIZE)
+    lcd.drawText(x + 16 + #tostring(mah) * 4, y + 12, 'm', SMLSIZE)
+    lcd.drawText(x + 16 + #tostring(mah) * 4, y + 18, 'ah', SMLSIZE)
 
     -- Draw current
     lcd.drawText(x + 2, y + 2, 'AMP' .. ':', SMLSIZE)
     lcd.drawText(x + 21, y + 2, current, SMLSIZE)
 end
 
+local function showChecklist()
+    lcd.clear()
+    lcd.resetBacklightTimeout()
+    lcd.drawText(1, 1, 'Checklist', INVERS)
+
+    local vPos = 11
+    for line in string.gmatch(checkListText, '([^\n]+)\n') do
+        lcd.drawRectangle(1, vPos, 7, 7)
+        lcd.drawText(15, vPos, line)
+        vPos = vPos + 10
+    end
+end
+
 function shared.run(event)
     lcd.clear()
 
-    -- Change screen if PAGE button is pressed
+    if (shared.isArmed) then
+        isChecklistVisible = false
+    end
+
+    -- Change screen if RETURN button is pressed
     if event == EVT_EXIT_BREAK then
-        if screeb == 2 and not shared.crsf then
-            screeb = 4
+        if (isChecklistVisible) then
+            isChecklistVisible = false
+            playFile('chlsc.wav')
         else
-            screeb = screeb + 1
-        end
-        if screeb > 4 then
-            screeb = 1
+            if screeb == 2 and not shared.crsf then
+                screeb = (hasGPS and 4 or 1)
+            else
+                screeb = screeb + 1
+            end
+            if screeb > 4 then
+                screeb = 1
+            end
         end
     end
 
     -- Get telemetry values
     getTelemeValues()
+
+    -- Show checlist if new battery instead of telemetry
+    if (isChecklistVisible) then
+        showChecklist()
+        return
+    end
 
     -- Draw model name centered at the upper top of the screen
     lcd.drawText(screen.w / 2 - #shared.modelName * 2.5, 0, shared.modelName, SMLSIZE)
@@ -459,7 +515,7 @@ function shared.run(event)
     drawModeTitle(screen.w / 2 - (wideScreen and 23 or 0), screen.h / 4 - 7)
 
     -- Draw sexy quadcopter animated in center
-    drawQuadcopter(screen.w / 2 - (wideScreen and 40 or 17),  screen.h / 2 - 14)
+    drawQuadcopter(screen.w / 2 - (wideScreen and 40 or 17), screen.h / 2 - 14)
 
     -- Draw voltage battery graphic in left side
     drawVoltageImage(3, screen.h / 2 - 22, screen.w / 10)
@@ -467,8 +523,8 @@ function shared.run(event)
     -- Draw LQ and RSSI stuff
     drawLink(screen.w - 44, (screen.h - 8) / 4 - 5)
 
-    -- Draw Current voltage at bottom middle
-    drawVoltageText(screen.w / 2 - (wideScreen and 44 or 21), screen.h - (screen.h - 8) / 4 + 1)
+    -- Draw Current temperature at bottom middle
+    drawTempText(screen.w / 2 - (wideScreen and 44 or 21), screen.h - (screen.h - 8) / 4 + 1)
 
     -- Draw flight timer, output and mah/curr
     if screeb == 1 then
@@ -483,12 +539,34 @@ function shared.run(event)
     drawData(screen.w - 44, (screen.h - 8) / 4 * 3 - 8)
 end
 
-function shared.init()
-    screen = {w = LCD_W, h = LCD_H}
-    wideScreen = screen.w == 212 and true or false
+local function loadChecklist()
+    local fn = '/MODELS/' .. shared.modelName .. '.txt'
+    local f = io.open(fn)
+    if f == nil then
+        return
+    end
 
-    screeb = 1
+    checkListText = io.read(f, 2048)
+
+    io.close(f)
+end
+
+function shared.init()
+    screen = { w = LCD_W, h = LCD_H }
+    wideScreen = screen.w == 212 and true or false
+    loadChecklist()
+
+    hasGPS = false
+    local f = io.open('/MODELS/' .. shared.modelName .. '_sett.txt')
+    if f ~= nil then
+        local t = io.read(f, 1024)
+        local hasGpsText = string.match(t, 'hasgps:(.+)')
+        hasGPS = (hasGpsText == '1')
+        io.close(f)
+    end
+
+    screeb = (hasGPS and 4 or 2)
 
     -- Store GPS coordinates
-    pos = {lat = 0, lon = 0}
+    pos = { lat = 0, lon = 0 }
 end
