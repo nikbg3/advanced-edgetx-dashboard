@@ -1,13 +1,5 @@
 # EdgeTX Quad telemetry dashboard
 
-# Addiotions to this FORK are the following features added by me (Nikolay Kolev):
-* Battery voltage is moved next to the battery
-* Now we show full battery voltage next to the average cell voltage
-* Showing CORE temperature
-* Checklist when you plug new battery. The checklist is read from the model's checklist file (samples included)
-* Audio when checklist is opened or completed
-* Model setting files that currently only setup if the model has GPS and based on that GPS mode is shown or ommitted
-* Air mode added to settings instead of pre-arm
 
 Advanced lua-based dashboard for the EdgeTX Monochrome LCD Transmitters
 
@@ -22,6 +14,15 @@ Advanced lua-based dashboard for the EdgeTX Monochrome LCD Transmitters
 * Gps
 * Settings Menu
 * ANIMATED QUAD WHEN ARMED !
+
+# Addiotions to this FORK are the following features added by me (Nikolay Kolev):
+* Battery voltage is moved next to the battery
+* Now we show full battery voltage next to the average cell voltage
+* Showing CORE temperature
+* Checklist when you plug new battery. The checklist is read from the model's checklist file (samples included)
+* Audio when checklist is opened or completed
+* Model setting files that currently only setup if the model has GPS and based on that GPS mode is shown or ommitted
+* Air mode added to settings instead of pre-arm
 
 ### Additional
 
