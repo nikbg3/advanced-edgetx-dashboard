@@ -21,7 +21,7 @@ Advanced lua-based dashboard for the EdgeTX Monochrome LCD Transmitters
 - Works with bigger screens *(Tango2, X9D)*
 - Shows avarage battery cells voltage
 
-### Addiotions to this FORK are the following features added by me (Nikolay Kolev):
+### Additional features to this FORK added by me (Nikolay Kolev):
 * Battery voltage is moved next to the battery
 * Now we show full battery voltage next to the average cell voltage
 * Showing CORE temperature
