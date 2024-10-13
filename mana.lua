@@ -28,17 +28,16 @@ local timer = 1
 shared.timerLeft = 0
 shared.timerMax = 0
 local armed = 0
-local prearmed = 0
 shared.modelName = 'Unknown'
 
 -- No modificar / don't modify
 shared.switchSettigs = {
-    arm = {switch = 'sf', target = 100},
-    prearm = {switch = 'sd', target = 100},
-    acro = {switch = 'sc', target = 0},
-    angle = {switch = 'sc', target = 50},
-    horizon = {switch = 'None', target = 0},
-    turtle = {switch = 'sc', target = 100}
+    arm = { switch = 'sf', target = 100 },
+    acro = { switch = 'sc', target = 0 },
+    angle = { switch = 'sc', target = 50 },
+    horizon = { switch = 'None', target = 0 },
+    turtle = { switch = 'sc', target = 100 },
+    air = { switch = 'sd', target = 100 }
 }
 
 -- Various variables
@@ -46,10 +45,8 @@ local internalModule = model.getModule(0)
 local externalModule = model.getModule(1)
 
 -- Timer stuff
-shared.isPrearmed = false
 shared.isArmed = false
 shared.noConnectionMSG = false
-shared.noPrearm = false
 
 -- Screen Manager
 function shared.changeScreen(delta)
@@ -66,23 +63,28 @@ end
 -- Telemetry sources, etc.
 shared.otherSettings = {
 
-    battery = {voltage = 'VFAS', used = 'Fuel', amps_meter = 'Curr', radio = 'tx-voltage'},
+    battery = { voltage = 'VFAS', used = 'Fuel', amps_meter = 'Curr', radio = 'tx-voltage' },
 
     -- Acá va el link quality y el rssi. Puedes cambiar TQly y 1RSS segun el protocolo que uses. No cambies el parametro que dice frsky.
-    link = {link_quality = 'RQly', rssi = 'RSSI', frsky = false},
+    link = { link_quality = 'RQly', rssi = 'RSSI', frsky = false },
 
     -- Acá puedes cambiar los valores de las advertencias, tx_battery_low_percent es un porcentaje.
-    warnings = {rssi_warning = -95, lq_warning = 50, battery_low = 3.5, tx_battery_low_percent = 20},
+    warnings = { rssi_warning = -95, lq_warning = 50, battery_low = 3.5, tx_battery_low_percent = 20 },
 
     -- GPS
-    satcount = 'Sats'
+    satcount = 'Sats',
+
+    -- Temperature
+    temp = { temp1 = 'Tmp1' }
 }
+
 
 --Reset telemetry protocol
 local function resetTelemetryProtocol() -- Reset telemetry protocol
     shared.otherSettings.link.rssi = 'RSSI'
     shared.otherSettings.battery.used = 'Fuel'
     shared.otherSettings.battery.voltage = 'VFAS'
+    shared.otherSettings.temp.temp1 = 'Tmp1'
     shared.otherSettings.link.frsky = true
 end
 
@@ -119,7 +121,7 @@ local function init()
     shared.crsf = crossfireTelemetryPush() ~= nil
     shared.ghost = ghostTelemetryPush() ~= nil
 
-    shared.screenSize = {w = LCD_W, h = LCD_H}
+    shared.screenSize = { w = LCD_W, h = LCD_H }
     shared.current = 0
     shared.changeScreen(0)
     -- Model name from the radio
@@ -153,12 +155,9 @@ local function run(event)
 
             shared.elrs = (data[shift + 1] == 0x45 and data[shift + 2] == 0x4c and data[shift + 3] == 0x52 and data[shift + 4] == 0x53)
         elseif math.ceil(tick) == 1 then
-            crossfireTelemetryPush(0x28, {0x00, 0xEA})
+            crossfireTelemetryPush(0x28, { 0x00, 0xEA })
         end
     end
-
-    -- PREARM switch source
-    prearmed = getValue(shared.switchSettings.prearm.switch)
 
     -- ARM switch source
     armed = getValue(shared.switchSettings.arm.switch)
@@ -169,21 +168,12 @@ local function run(event)
         shared.noConnectionMSG = false
     end
 
-    if (armed + 1024) / 20.48 == shared.switchSettings.arm.target and shared.rssi ~= 0 and (shared.isPrearmed or shared.isArmed) and shared.switchSettings.arm.switch ~= 'None' then
+    if (armed + 1024) / 20.48 == shared.switchSettings.arm.target and shared.rssi ~= 0 and shared.switchSettings.arm.switch ~= 'None' then
         shared.isArmed = true
-    elseif (armed + 1024) / 20.48 == shared.switchSettings.arm.target and shared.rssi ~= 0 and not shared.isPrearmed then
+    elseif (armed + 1024) / 20.48 == shared.switchSettings.arm.target and shared.rssi ~= 0 then
         shared.isArmed = false
-        shared.noPrearm = true
     else
         shared.isArmed = false
-        shared.noPrearm = false
-    end
-
-    -- Check if quad is armed by a switch
-    if ((prearmed + 1024) / 20.48 == shared.switchSettings.prearm.target) and not ((armed + 1024) / 20.48 == shared.switchSettigs.arm.target and not shared.isArmed) or (shared.switchSettings.prearm.switch == 'None') then
-        shared.isPrearmed = true
-    else
-        shared.isPrearmed = false
     end
 end
 
@@ -193,7 +183,7 @@ local function background()
 
     -- Follow ARM state if timer is not configured
     if model.getTimer(timerName).mode <= 1 then
-        model.setTimer(timerName, {mode = shared.isArmed == true and 1 or 0})
+        model.setTimer(timerName, { mode = shared.isArmed == true and 1 or 0 })
     end
 
     -- Get seconds left in model timer
@@ -215,4 +205,4 @@ local function background()
 end
 
 
-return { run = run, init = init, background = background}
+return { run = run, init = init, background = background }
