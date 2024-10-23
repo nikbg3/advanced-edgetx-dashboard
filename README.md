@@ -29,6 +29,7 @@ Advanced lua-based dashboard for the EdgeTX Monochrome LCD Transmitters
 * Audio when checklist is opened or completed
 * Model setting files that currently only setup if the model has GPS and based on that GPS mode is shown or ommitted
 * Air mode added to settings instead of pre-arm
+* Adding timer that is more close to the BF timer instead of using EdgeTX's timers
 
 ## Author
 
