@@ -8,6 +8,9 @@ local screeb = 2 -- 1 is fly timer; 2 is for AMP and mAH; and 3 is for GPS.
 local hasGPS = true
 local checkListText = nil
 local isChecklistVisible = false
+local timerInSeconds = nil
+local timerInSecondsLastUpdate = nil
+local lastMinute = nil
 
 --Variables used for the rssi display
 local lq = 0
@@ -44,10 +47,18 @@ local function getTelemeValues()
 
     -- Get quad battery voltage source
     local newVoltage = getValue(shared.otherSettings.battery.voltage)
-    if (not shared.isArmed and checkListText ~= nil and (voltage == nil or voltage == 0 or voltage ~= voltage) and newVoltage > 1.0) then
-        isChecklistVisible = true
-        playFile("chl.wav")
+
+    if ((voltage == nil or voltage == 0 or voltage ~= voltage) and newVoltage > 1.0) then
+        timerInSecondsLastUpdate = 0
+        timerInSeconds = 0
+
+        if (not shared.isArmed and checkListText ~= nil) then
+            isChecklistVisible = true
+            playFile("chl.wav")
+        end
     end
+
+
     voltage = newVoltage
 
     -- Get quad temperature
@@ -287,7 +298,7 @@ local function drawModeTitle(x, y)
 end
 -- Current time with icon
 local function drawTime(x, y)
-    -- local timeNow = getDateTime()
+    local timeNow = getDateTime()
 
     -- Clock icon
     lcd.drawLine(x + 1, y + 0, x + 4, y + 0, SOLID, FORCE)
@@ -328,12 +339,12 @@ local function drawFlightTimer(x, y)
 
     -- Draw caption and timer text
     lcd.drawText(x + 2, y + 2, 'Fly Timer', SMLSIZE)
-    lcd.drawTimer(x + 2, y + 11, math.abs(shared.timerLeft), DBLSIZE + (shared.timerLeft >= 0 and 0 or BLINK))
+    lcd.drawTimer(x + 2, y + 11, timerInSeconds, DBLSIZE + (shared.timerLeft >= 0 and 0 or BLINK))
 
     -- Fill the background
-    for offset = 1, shared.timerLeft / shared.timerMax * 42, 1 do
-        lcd.drawLine(x + offset, y + 10, x + offset, y + 27, SOLID, 0)
-    end
+    -- for offset = 1, shared.timerLeft / shared.timerMax * 42, 1 do
+    --     lcd.drawLine(x + offset, y + 10, x + offset, y + 27, SOLID, 0)
+    -- end
 end
 
 local function drawPosition(x, y)
@@ -463,6 +474,23 @@ local function showChecklist()
     end
 end
 
+local function updateTimer()
+    if shared.isArmed then
+        local newTime = getRtcTime()
+        timerInSeconds = timerInSeconds + (newTime - timerInSecondsLastUpdate)
+        timerInSecondsLastUpdate = newTime
+        local newMinute = math.floor(timerInSeconds / 60)
+        if lastMinute < newMinute then
+            lastMinute = newMinute
+            if timerInSeconds > 0 and timerInSeconds % 60 == 0 then
+                playNumber(lastMinute, UNIT_MINUTES)
+            end
+        end
+    else
+        timerInSecondsLastUpdate = getRtcTime()
+    end
+end
+
 function shared.run(event)
     lcd.clear()
 
@@ -486,6 +514,8 @@ function shared.run(event)
             end
         end
     end
+
+    updateTimer()
 
     -- Get telemetry values
     getTelemeValues()
@@ -554,6 +584,10 @@ end
 function shared.init()
     screen = { w = LCD_W, h = LCD_H }
     wideScreen = screen.w == 212 and true or false
+    timerInSecondsLastUpdate = getRtcTime()
+    timerInSeconds = 0
+    lastMinute = 0
+
     loadChecklist()
 
     hasGPS = false
@@ -565,7 +599,7 @@ function shared.init()
         io.close(f)
     end
 
-    screeb = (hasGPS and 4 or 2)
+    screeb = (hasGPS and 4 or 1)
 
     -- Store GPS coordinates
     pos = { lat = 0, lon = 0 }
